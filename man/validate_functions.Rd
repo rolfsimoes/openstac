@@ -7,8 +7,6 @@
 \alias{check_page}
 \alias{check_intersects}
 \alias{check_collections}
-\alias{check_collection_in_db}
-\alias{check_item_in_db}
 \title{Validate HTTP input parameters for STAC and OGC API requests.}
 \usage{
 check_limit(limit, min, max)
@@ -20,10 +18,6 @@ check_page(page)
 check_intersects(intersects)
 
 check_collections(collections)
-
-check_collection_in_db(db, collection_id)
-
-check_item_in_db(db, collection_id, item_id)
 }
 \arguments{
 \item{limit}{The limit parameter to be checked.}
@@ -39,14 +33,6 @@ check_item_in_db(db, collection_id, item_id)
 \item{intersects}{The intersects parameter to be checked.}
 
 \item{collections}{The collections parameter to be checked.}
-
-\item{collection_id}{The identifier of the collection. This parameter
-specifies which collections will be checked.}
-
-\item{item_id}{The identifier of the item within the specified collection.
-This parameter specifies which items will be checked.}
-
-\item{datetime}{The datetime parameter to be checked.}
 }
 \description{
 This set of functions provides validation for various HTTP input
@@ -78,14 +64,6 @@ geometry, it raises an error with the appropriate status code.
 
 \item \code{check_collections}: Checks if at least one collection is
 provided. If no collections are provided, it raises an error with
-the appropriate status code.
-
-\item \code{check_collection_in_db}: Checks if the specified collection
-exists in the database. If the collection does not exist, it raises
-an error with the appropriate status code.
-
-\item \code{check_item_in_db}: Checks if the specified item exists in
-the database. If the item does not exist, it raises an error with
 the appropriate status code.
 
 }

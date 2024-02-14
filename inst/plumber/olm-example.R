@@ -64,7 +64,7 @@ function(req, res, collection_id) {
 #* @get /collections/<collection_id>/items
 #* @param collection_id:str The ID of the collection
 #* @param limit:int Maximum number of features to return (default: 10)
-#* @param bbox:str Bounding box (minx,miny,maxx,maxy)
+#* @param bbox:str Bounding box (xmin,ymin,xmax,ymax)
 #* @param datetime:str Datetime filter
 #* @param page:int Pagination parameter (default: 1)
 #* @serializer unboxedJSON
@@ -120,7 +120,7 @@ function(req, res, collection_id, item_id) {
 #* Search endpoint
 #* @get /search
 #* @param limit:int Maximum number of features to return (default: 10)
-#* @param bbox:str Bounding box (minx,miny,maxx,maxy)
+#* @param bbox:str Bounding box (xmin,ymin,xmax,ymax)
 #* @param datetime:str Datetime filter
 #* @param intersects:str GeoJSON geometry to do spatial search
 #* @param ids:str Array of items ID to return

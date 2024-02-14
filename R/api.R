@@ -1,4 +1,3 @@
-
 #' Handle API requests
 #'
 #' These are low-level functions responsible for handling requests of the
@@ -191,4 +190,45 @@ api_search <- function(api,
                        collections,
                        page, ...) {
   UseMethod("api_search", api)
+}
+
+links_landing_page <- function(doc, api, req, res, ...) {
+  UseMethod("links_landing_page", api)
+}
+
+links_collection <- function(doc, api, req, res, ...) {
+  UseMethod("links_collection", api)
+}
+
+links_collections <- function(doc, api, req, res, ...) {
+  UseMethod("links_collections", api)
+}
+
+links_item <- function(doc, api, req, res, collection_id, ...) {
+  UseMethod("links_item", api)
+}
+
+links_items <- function(doc,
+                        api,
+                        req,
+                        res,
+                        collection_id,
+                        limit,
+                        bbox,
+                        datetime,
+                        page, ...) {
+  UseMethod("links_items", api)
+}
+
+links_search <- function(doc,
+                         api,
+                         req,
+                         res,
+                         limit,
+                         bbox,
+                         datetime,
+                         ids,
+                         collections,
+                         page, ...) {
+  UseMethod("links_search", api)
 }

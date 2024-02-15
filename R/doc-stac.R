@@ -1,20 +1,6 @@
-# STAC API version implemented by this S3 class
-stac_version <- "1.0.0"
-#' @rdname api_handling
+#' @rdname doc_handling
 #' @export
-create_stac <- function(id, title, description, conforms_to = NULL, ...) {
-  create_api(
-    api_class = c("stac", "ogcapi"),
-    title = title,
-    description = description,
-    conforms_to = conforms_to,
-    stac_version = stac_version,
-    id = id, ...
-  )
-}
-#' @rdname api_handling
-#' @export
-api_landing_page.stac <- function(api, req, res, ...) {
+doc_landing_page.stac <- function(api, req) {
   doc <- list(
     stac_version = api$stac_version,
     type = "Catalog",
@@ -22,53 +8,51 @@ api_landing_page.stac <- function(api, req, res, ...) {
     title = api$title, description = api$description,
     conformsTo = api$conforms_to
   )
-  doc <- links_landing_page(doc, api, req, res)
+  doc <- links_landing_page(doc, api, get_host(req), get_method(req))
   doc
 }
-#' @rdname api_handling
+#' @rdname doc_handling
 #' @export
-api_conformance.stac <- function(api, req, res, ...) {
-  NextMethod("api_conformance", api)
+doc_conformance.stac <- function(api, req) {
+  NextMethod("doc_conformance", api)
 }
-#' @rdname api_handling
+#' @rdname doc_handling
 #' @export
-api_collections.stac <- function(api, req, res, ...) {
-  NextMethod("api_collections", api)
+doc_collections.stac <- function(api, req) {
+  NextMethod("doc_collections", api)
 }
-#' @rdname api_handling
+#' @rdname doc_handling
 #' @export
-api_collection.stac <- function(api, req, res, collection_id, ...) {
-  NextMethod("api_collection", api)
+doc_collection.stac <- function(api, req, collection_id) {
+  NextMethod("doc_collection", api)
 }
-#' @rdname api_handling
+#' @rdname doc_handling
 #' @export
-api_items.stac <- function(api,
+doc_items.stac <- function(api,
                            req,
-                           res,
                            collection_id,
                            limit,
                            bbox,
                            datetime,
-                           page, ...) {
-  NextMethod("api_items", api)
+                           page) {
+  NextMethod("doc_items", api)
 }
-#' @rdname api_handling
+#' @rdname doc_handling
 #' @export
-api_item.stac <- function(api, req, res, collection_id, item_id, ...) {
-  NextMethod("api_item", api)
+doc_item.stac <- function(api, req, collection_id, item_id) {
+  NextMethod("doc_item", api)
 }
-#' @rdname api_handling
+#' @rdname doc_handling
 #' @export
-api_search.stac <- function(api,
+doc_search.stac <- function(api,
                             req,
-                            res,
                             limit,
                             bbox,
                             datetime,
                             intersects,
                             ids,
                             collections,
-                            page, ...) {
+                            page) {
   db <- get_db(api)
   check_collection_in_db(db, collections)
   doc <- db_search(
@@ -81,11 +65,11 @@ api_search.stac <- function(api,
     collections = collections,
     page = page
   )
-  links_search(
+  doc <- links_search(
     doc = doc,
     api = api,
-    req = req,
-    res = res,
+    host = get_host(req),
+    method = get_method(req),
     limit = limit,
     bbox = bbox,
     datetime = datetime,
@@ -93,52 +77,58 @@ api_search.stac <- function(api,
     collections = collections,
     page = page
   )
+  doc
 }
+#' @keywords internal
 #' @export
-links_landing_page.stac <- function(doc, api, req, res, ...) {
+links_landing_page.stac <- function(doc, api, host, method) {
   NextMethod("links_landing_page", api)
 }
+#' @keywords internal
 #' @export
-links_collection.stac <- function(doc, api, req, res, ...) {
+links_collection.stac <- function(doc, api, host, method) {
   NextMethod("links_collection", api)
 }
+#' @keywords internal
 #' @export
-links_collections.stac <- function(doc, api, req, res, ...) {
+links_collections.stac <- function(doc, api, host, method) {
   NextMethod("links_collections", api)
 }
+#' @keywords internal
 #' @export
-links_item.stac <- function(doc, api, req, res, ...) {
+links_item.stac <- function(doc, api, host, method) {
   NextMethod("links_item", api)
 }
+#' @keywords internal
 #' @export
 links_items.stac <- function(doc,
                              api,
-                             req,
-                             res,
+                             host,
+                             method,
                              collection_id,
                              limit,
                              bbox,
                              datetime,
-                             page, ...) {
+                             page) {
   NextMethod("links_items", api)
 }
+#' @keywords internal
 #' @export
 links_search.stac <- function(doc,
                               api,
-                              req,
-                              res,
+                              host,
+                              method,
                               limit,
                               bbox,
                               datetime,
                               ids,
                               collections,
-                              page, ...) {
+                              page) {
   pages <- get_pages(doc, limit)
   # update item links
   doc$features <- lapply(doc$features, function(item) {
-    links_item(item, api, req, res)
+    links_item(item, api, host, method)
   })
-  host <- get_host(req)
   doc$links <- list(
     new_link(
       rel = "root",
@@ -146,7 +136,6 @@ links_search.stac <- function(doc,
       type = "application/json"
     )
   )
-  method <- get_method(req)
   # add navigation links
   if (method == "GET") {
     if (page > 1 && page <= pages)
@@ -157,8 +146,8 @@ links_search.stac <- function(doc,
           host = host,
           "/search",
           limit = limit,
-          bbox = bbox,
-          datetime = datetime_as_str(datetime),
+          bbox = deparse_array(bbox),
+          datetime = deparse_datetime(datetime),
           ids = ids,
           collections = collections,
           page = page - 1
@@ -173,8 +162,8 @@ links_search.stac <- function(doc,
           host = host,
           "/search",
           limit = limit,
-          bbox = bbox,
-          datetime = datetime_as_str(datetime),
+          bbox = deparse_array(bbox),
+          datetime = deparse_datetime(datetime),
           ids = ids,
           collections = collections,
           page = page + 1

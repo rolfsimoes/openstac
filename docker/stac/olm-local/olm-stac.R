@@ -41,13 +41,21 @@ api <- set_db(api, driver = "local", file = "/openstac/openlandmap.rds")
 #* Custom error handling
 #* @plumber
 function(pr) {
-  pr_set_error(pr, api_error_handler)
+  api_setup(api, pr, handle_errors = TRUE)
 }
 
 #* Enable Cross-origin Resource Sharing
 #* @filter cors
 function(req, res) {
   api_cors_handler(req, res, origin = "*", methods = "*")
+}
+
+#* OpenAPI spec
+#* @get /api
+#* @serializer unboxedJSON
+#* @tag 'STAC API v1.0.0'
+function(req, res) {
+  api_spec(api, req)
 }
 
 #* Landing page

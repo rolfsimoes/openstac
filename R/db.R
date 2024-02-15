@@ -33,6 +33,7 @@ drivers <- c("local")
 set_db <- function(api, driver, ...) {
   db <- new_db(driver, ...)
   api_attr(api, "db") <- db
+  api
 }
 #' @rdname db_functions
 #' @export

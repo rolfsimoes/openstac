@@ -115,7 +115,10 @@
 #'
 NULL
 #' @keywords internal
-create_api <- function(api_class, title, description, conforms_to, ...) {
+create_api <- function(api_class,
+                       title,
+                       description,
+                       conforms_to, ...) {
   structure(
     list(
       title = title,
@@ -124,6 +127,40 @@ create_api <- function(api_class, title, description, conforms_to, ...) {
     ),
     class = api_class,
     env = new.env(hash = TRUE, parent = parent.frame())
+  )
+}
+#' @rdname api_handling
+#' @export
+create_stac <- function(id,
+                        title,
+                        description,
+                        conforms_to = NULL, ...) {
+  create_api(
+    api_class = c("stac", "ogcapi"),
+    title = title,
+    description = description,
+    conforms_to = conforms_to,
+    stac_version = "1.0.0",
+    id = id, ...
+  )
+}
+#' @rdname api_handling
+#' @export
+create_ogcapi <- function(title,
+                          description,
+                          conforms_to = NULL, ...) {
+  # A list of all conformance classes specified in a standard that the
+  # server conforms to.
+  ogcapi_conforms_to <- c(
+    "http://www.opengis.net/spec/ogcapi-features-1/1.0/conf/core",
+    "http://www.opengis.net/spec/ogcapi-features-1/1.0/conf/oas30",
+    "http://www.opengis.net/spec/ogcapi-features-1/1.0/conf/geojson"
+  )
+  create_api(
+    api_class = "ogcapi",
+    title = title,
+    description = description,
+    conforms_to = c(ogcapi_conforms_to, conforms_to), ...
   )
 }
 #' @keywords internal
@@ -142,23 +179,40 @@ api_attr <- function(api, name) {
 }
 #' @rdname api_handling
 #' @export
-api_landing_page <- function(api, req, res, ...) {
-  UseMethod("api_landing_page", api)
+api_setup <- function(api, pr, handle_errors = TRUE) {
+  api_attr(api, "plumber") <- pr
+  plumber::pr_set_docs(pr, FALSE)
+  if (handle_errors)
+    plumber::pr_set_error(pr, api_error_handler)
+  api
+}
+#' @keywords internal
+get_plumber <- function(api) {
+  pr <- api_attr(api, "plumber")
+  if (is.null(pr))
+    api_stop(
+      status = 500,
+      "The API was not setup properly. Please, use ",)
 }
 #' @rdname api_handling
 #' @export
-api_conformance <- function(api, req, res, ...) {
-  UseMethod("api_conformance", api)
+api_landing_page <- function(api, req, res) {
+  doc_landing_page(api, req)
 }
 #' @rdname api_handling
 #' @export
-api_collections <- function(api, req, res, ...) {
-  UseMethod("api_collections", api)
+api_conformance <- function(api, req, res) {
+  doc_conformance(api, req)
 }
 #' @rdname api_handling
 #' @export
-api_collection <- function(api, req, res, collection_id, ...) {
-  UseMethod("api_collection", api)
+api_collections <- function(api, req, res) {
+  doc_collections(api, req)
+}
+#' @rdname api_handling
+#' @export
+api_collection <- function(api, req, res, collection_id) {
+  doc_collection(api, req, collection_id)
 }
 #' @rdname api_handling
 #' @export
@@ -169,13 +223,39 @@ api_items <- function(api,
                       limit,
                       bbox,
                       datetime,
-                      page, ...) {
-  UseMethod("api_items", api)
+                      page) {
+  # check parameters
+  if (!is.null(limit)) {
+    limit <- parse_int(limit[[1]])
+    check_limit(limit, min = 1, max = 10000)
+  }
+  if (missing(bbox)) bbox <- NULL
+  if (!is.null(bbox)) {
+    bbox <- parse_dbl(bbox)
+    check_bbox(bbox)
+  }
+  if (missing(datetime)) datetime <- NULL
+  if (!is.null(datetime)) {
+    datetime <- parse_datetime(datetime[[1]])
+  }
+  if (!is.null(page)) {
+    page <- parse_int(page[[1]])
+    check_page(page)
+  }
+  doc_items(
+    api = api,
+    req = req,
+    collection_id = collection_id,
+    limit = limit,
+    bbox = bbox,
+    datetime = datetime,
+    page = page
+  )
 }
 #' @rdname api_handling
 #' @export
-api_item <- function(api, req, res, collection_id, item_id, ...) {
-  UseMethod("api_item", api)
+api_item <- function(api, req, res, collection_id, item_id) {
+  doc_item(api, req, collection_id, item_id)
 }
 #' @rdname api_handling
 #' @export
@@ -188,47 +268,87 @@ api_search <- function(api,
                        intersects,
                        ids,
                        collections,
-                       page, ...) {
-  UseMethod("api_search", api)
+                       page) {
+  # check parameters
+  if (!is.null(limit)) {
+    limit <- parse_int(limit[[1]])
+    check_limit(limit, min = 1, max = 10000)
+  }
+  if (missing(bbox)) bbox <- NULL
+  if (missing(intersects)) intersects <- NULL
+  api_stopifnot(
+    is.null(bbox) || is.null(intersects),
+    status = 400,
+    "only one of either intersects or bbox may be provided"
+  )
+  if (!is.null(bbox)) {
+    bbox <- parse_dbl(bbox)
+    check_bbox(bbox)
+  }
+  if (missing(datetime)) datetime <- NULL
+  if (!is.null(datetime)) {
+    datetime <- parse_datetime(datetime[[1]])
+  }
+  method <- get_method(req)
+  if (!is.null(intersects)) {
+    api_stopifnot(
+      method == "POST",
+      status = 405,
+      "the request method is not supported"
+    )
+    intersects <- parse_geojson(intersects)
+    check_intersects(intersects)
+  }
+  if (missing(ids)) ids <- NULL
+  if (!is.null(ids)) ids <- parse_str(ids)
+  api_stopifnot(
+    !missing(collections),
+    status = 400,
+    "collections parameter must be provided"
+  )
+  if (!is.null(collections)) {
+    collections <- parse_str(collections)
+    check_collections(collections)
+  }
+  if (!is.null(page)) {
+    page <- parse_int(page[[1]])
+    check_page(page)
+  }
+  doc_search(
+    api = api,
+    req = req,
+    limit = limit,
+    bbox = bbox,
+    datetime = datetime,
+    intersects = intersects,
+    ids = ids,
+    collections = collections,
+    page = page
+  )
 }
-
-links_landing_page <- function(doc, api, req, res, ...) {
-  UseMethod("links_landing_page", api)
+api_docs <- function(pr) {
+  list(
+    name = "swagger",
+    index = function(version = "3", ...) {
+      swagger::swagger_spec(
+        api_path = paste0(
+          "window.location.origin + ",
+          "window.location.pathname.replace(", "/\\(", "__swagger__\\\\/|",
+          "__swagger__\\\\/", "index.html|", "__docs__\\\\/|",
+          "__docs__\\\\/", "index.html", "\\)$/, ", "\"\"",
+          ") + \"openapi.json\""),
+        version = version)
+    }, static = function(version = "3", ...) {
+      swagger::swagger_path(version)
+  })
 }
-
-links_collection <- function(doc, api, req, res, ...) {
-  UseMethod("links_collection", api)
-}
-
-links_collections <- function(doc, api, req, res, ...) {
-  UseMethod("links_collections", api)
-}
-
-links_item <- function(doc, api, req, res, collection_id, ...) {
-  UseMethod("links_item", api)
-}
-
-links_items <- function(doc,
-                        api,
-                        req,
-                        res,
-                        collection_id,
-                        limit,
-                        bbox,
-                        datetime,
-                        page, ...) {
-  UseMethod("links_items", api)
-}
-
-links_search <- function(doc,
-                         api,
-                         req,
-                         res,
-                         limit,
-                         bbox,
-                         datetime,
-                         ids,
-                         collections,
-                         page, ...) {
-  UseMethod("links_search", api)
+api_spec <- function(api, req) {
+  pr <- get_plumber(api)
+  spec <- pr$getApiSpec()
+  utils::modifyList(
+    list(servers = list(list(
+      url = make_url(get_host(req))
+    ))),
+    spec
+  )
 }

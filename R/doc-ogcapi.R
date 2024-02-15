@@ -1,56 +1,42 @@
-# A list of all conformance classes specified in a standard that the
-# server conforms to.
-ogcapi_conforms_to <- c(
-  "http://www.opengis.net/spec/ogcapi-features-1/1.0/conf/core",
-  "http://www.opengis.net/spec/ogcapi-features-1/1.0/conf/oas30",
-  "http://www.opengis.net/spec/ogcapi-features-1/1.0/conf/geojson"
-)
-#' @rdname api_handling
+#' @rdname doc_handling
 #' @export
-create_ogcapi <- function(title, description, conforms_to = NULL, ...) {
-  create_api(
-    api_class = "ogcapi",
-    title = title,
-    description = description,
-    conforms_to = c(ogcapi_conforms_to, conforms_to), ...
-  )
+doc_landing_page.ogcapi <- function(api, req) {
+  doc <- list(title = api$title, description = api$description)
+  doc <- links_landing_page(doc, api, get_host(req), get_method(req))
+  doc
 }
-#' @rdname api_handling
+#' @rdname doc_handling
 #' @export
-api_landing_page.ogcapi <- function(api, req, res, ...) {
-  list(title = api$title, description = api$description) |>
-    links_landing_page(api, req, res)
+doc_conformance.ogcapi <- function(api, req) {
+  doc <- list(conformsTo = api$conforms_to)
+  doc
 }
-#' @rdname api_handling
+#' @rdname doc_handling
 #' @export
-api_conformance.ogcapi <- function(api, req, res, ...) {
-  list(conformsTo = api$conforms_to)
-}
-#' @rdname api_handling
-#' @export
-api_collections.ogcapi <- function(api, req, res, ...) {
+doc_collections.ogcapi <- function(api, req) {
   db <- get_db(api)
-  list(collections = db_collections(db)) |>
-    links_collections(api, req, res)
+  doc <- list(collections = db_collections(db))
+  doc <- links_collections(doc, api, get_host(req), get_method(req))
+  doc
 }
-#' @rdname api_handling
+#' @rdname doc_handling
 #' @export
-api_collection.ogcapi <- function(api, req, res, collection_id, ...) {
+doc_collection.ogcapi <- function(api, req, collection_id) {
   db <- get_db(api)
   check_collection_in_db(db, collection_id)
-  db_collection(db, collection_id) |>
-    links_collection(api, req, res)
+  doc <- db_collection(db, collection_id)
+  doc <- links_collection(doc, api, get_host(req), get_method(req))
+  doc
 }
-#' @rdname api_handling
+#' @rdname doc_handling
 #' @export
-api_items.ogcapi <- function(api,
+doc_items.ogcapi <- function(api,
                              req,
-                             res,
                              collection_id,
                              limit,
                              bbox,
                              datetime,
-                             page, ...) {
+                             page) {
   db <- get_db(api)
   check_collection_in_db(db, collection_id)
   doc <- db_items(
@@ -61,30 +47,32 @@ api_items.ogcapi <- function(api,
     datetime = datetime,
     page = page
   )
-  links_items(
+  doc <- links_items(
     doc = doc,
     api = api,
-    req = req,
-    res = res,
+    host = get_host(req),
+    method = get_method(req),
     collection_id = collection_id,
     limit = limit,
     bbox = bbox,
     datetime = datetime,
     page = page
   )
+  doc
 }
-#' @rdname api_handling
+#' @rdname doc_handling
 #' @export
-api_item.ogcapi <- function(api, req, res, collection_id, item_id, ...) {
+doc_item.ogcapi <- function(api, req, collection_id, item_id) {
   db <- get_db(api)
   check_collection_in_db(db, collection_id)
   check_item_in_db(db, collection_id, item_id)
-  db_item(db, collection_id, item_id) |>
-    links_item(api, req, res)
+  doc <- db_item(db, collection_id, item_id)
+  doc <- links_item(doc, api, get_host(req), get_method(req))
+  doc
 }
+#' @keywords internal
 #' @export
-links_landing_page.ogcapi <- function(doc, api, req, res, ...) {
-  host <- get_host(req)
+links_landing_page.ogcapi <- function(doc, api, host, method) {
   doc$links  <- list(
     new_link(
       rel = "root",
@@ -147,9 +135,9 @@ links_landing_page.ogcapi <- function(doc, api, req, res, ...) {
   )
   doc
 }
+#' @keywords internal
 #' @export
-links_collection.ogcapi <- function(doc, api, req, res, ...) {
-  host <- get_host(req)
+links_collection.ogcapi <- function(doc, api, host, method) {
   doc$links <- list(
     new_link(
       rel = "root",
@@ -169,12 +157,12 @@ links_collection.ogcapi <- function(doc, api, req, res, ...) {
   )
   doc
 }
+#' @keywords internal
 #' @export
-links_collections.ogcapi <- function(doc, api, req, res, ...) {
+links_collections.ogcapi <- function(doc, api, host, method) {
   doc$collections <- lapply(doc$collections, function(collection) {
-    links_collection(collection, api, req, res)
+    links_collection(collection, api, host, method)
   })
-  host <- get_host(req)
   doc$links <- list(
     new_link(
       rel = "root",
@@ -189,9 +177,9 @@ links_collections.ogcapi <- function(doc, api, req, res, ...) {
   )
   doc
 }
+#' @keywords internal
 #' @export
-links_item.ogcapi <- function(doc, api, req, res, ...) {
-  host <- get_host(req)
+links_item.ogcapi <- function(doc, api, host, method) {
   doc$links <- list(
     new_link(
       rel = "root",
@@ -212,22 +200,22 @@ links_item.ogcapi <- function(doc, api, req, res, ...) {
   )
   doc
 }
+#' @keywords internal
 #' @export
 links_items.ogcapi <- function(doc,
-                                api,
-                                req,
-                                res,
-                                collection_id,
-                                limit,
-                                bbox,
-                                datetime,
-                                page, ...) {
+                               api,
+                               host,
+                               method,
+                               collection_id,
+                               limit,
+                               bbox,
+                               datetime,
+                               page) {
   pages <- get_pages(doc, limit)
   # update item links
   doc$features <- lapply(doc$features, function(item) {
-    links_item(item, api, req, res)
+    links_item(item, api, host, method)
   })
-  host <- get_host(req)
   doc$links <- list(
     new_link(
       rel = "root",
@@ -242,8 +230,8 @@ links_items.ogcapi <- function(doc,
         collection_id,
         "items",
         limit = limit,
-        bbox = bbox,
-        datetime = datetime_as_str(datetime),
+        bbox = deparse_array(bbox),
+        datetime = deparse_datetime(datetime),
         page = page
       ),
       type = "application/geo+json"
@@ -265,8 +253,8 @@ links_items.ogcapi <- function(doc,
         collection_id,
         "items",
         limit = limit,
-        bbox = bbox,
-        datetime = datetime_as_str(datetime),
+        bbox = deparse_array(bbox),
+        datetime = deparse_datetime(datetime),
         page = page - 1
       ),
       type = "application/geo+json"
@@ -281,8 +269,8 @@ links_items.ogcapi <- function(doc,
         collection_id,
         "items",
         limit = limit,
-        bbox = bbox,
-        datetime = datetime_as_str(datetime),
+        bbox = deparse_array(bbox),
+        datetime = deparse_datetime(datetime),
         page = page + 1
       ),
       type = "application/geo+json"

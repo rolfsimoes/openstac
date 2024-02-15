@@ -42,9 +42,9 @@ db_items_id_exist.mongodb <- function(db, collection_id, ids) {
 db_items.mongodb <- function(db, collection_id, limit, bbox, datetime, page) {
   items <- mongo_items(db, collection_id)
   # datetime filter...
-  exact_date <- get_datetime_exact(datetime)
-  start_date <- get_datetime_start(datetime)
-  end_date <- get_datetime_end(datetime)
+  exact_date <- datetime$exact
+  start_date <- datetime$start
+  end_date <- datetime$end
   # ...exact_date
   if (!is.null(exact_date)) {
     items <- mongo_filter_exact_date(items, exact_date)

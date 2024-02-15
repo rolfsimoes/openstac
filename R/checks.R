@@ -54,6 +54,7 @@ NULL
 
 #' @keywords internal
 check_rfc3339 <- function(datetime) {
+  if (is.null(datetime)) return()
   api_stopifnot(
     !is.na(datetime),
     status = 400,
@@ -62,12 +63,9 @@ check_rfc3339 <- function(datetime) {
 }
 #' @keywords internal
 check_datetime <- function(datetime) {
-  start_date <- get_datetime_start(datetime)
-  end_date <- get_datetime_end(datetime)
-  exact_date <- get_datetime_exact(datetime)
-  if (!is.null(start_date)) check_rfc3339(start_date)
-  if (!is.null(end_date)) check_rfc3339(end_date)
-  if (!is.null(exact_date)) check_rfc3339(exact_date)
+  check_rfc3339(datetime$start)
+  check_rfc3339(datetime$end)
+  check_rfc3339(datetime$exact)
 }
 #' @rdname validate_functions
 #' @export

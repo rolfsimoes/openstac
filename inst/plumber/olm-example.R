@@ -1,11 +1,11 @@
 #* @apiTitle OpenLandMap STAC API Example
-#* @apiDescription Example of Spatio-Temporal Asset Catalog for global layers provided by OpenLandMap and maintaned by OpenGeoHub Foundation
+#* @apiDescription Example of Spatio-Temporal Asset Catalog for global
+#*   layers provided by OpenLandMap and maintaned by OpenGeoHub Foundation
 #* @apiVersion 1.0.0
 #* @apiBasePath /
 
 # Load libraries
 library(openstac)
-library(plumber)
 
 # A list of all conformance classes specified in a standard that the
 # server conforms to.
@@ -19,7 +19,9 @@ conforms_to <- c(
 api <- create_stac(
   id = "openlandmap",
   title = "OpenLandMap STAC API Example",
-  description = "Example of Spatio-Temporal Asset Catalog for global layers provided by OpenLandMap and maintaned by OpenGeoHub Foundation",
+  description = paste("Example of Spatio-Temporal Asset Catalog for",
+                      "global layers provided by OpenLandMap and",
+                      "maintaned by OpenGeoHub Foundation"),
   conforms_to = conforms_to
 )
 
@@ -76,25 +78,6 @@ function(req,
          bbox,
          datetime,
          page = 1) {
-  # check parameters
-  if (!is.null(limit)) {
-    limit <- parse_int(limit[[1]])
-    check_limit(limit, min = 1, max = 10000)
-  }
-  if (missing(bbox)) bbox <- NULL
-  if (!is.null(bbox)) {
-    bbox <- parse_dbl(bbox)
-    check_bbox(bbox)
-  }
-  if (missing(datetime)) datetime <- NULL
-  if (!is.null(datetime)) {
-    datetime <- parse_datetime(datetime[[1]])
-  }
-  if (!is.null(page)) {
-    page <- parse_int(page[[1]])
-    check_page(page)
-  }
-  # call api items
   api_items(
     api = api,
     req = req,
@@ -137,52 +120,6 @@ function(req,
          ids,
          collections,
          page = 1) {
-  # check parameters
-  if (!is.null(limit)) {
-    limit <- parse_int(limit[[1]])
-    check_limit(limit, min = 1, max = 10000)
-  }
-  if (missing(bbox)) bbox <- NULL
-  if (missing(intersects)) intersects <- NULL
-  api_stopifnot(
-    is.null(bbox) || is.null(intersects),
-    status = 400,
-    "only one of either intersects or bbox may be provided"
-  )
-  if (!is.null(bbox)) {
-    bbox <- parse_dbl(bbox)
-    check_bbox(bbox)
-  }
-  if (missing(datetime)) datetime <- NULL
-  if (!is.null(datetime)) {
-    datetime <- parse_datetime(datetime[[1]])
-  }
-  method <- get_method(req)
-  if (!is.null(intersects)) {
-    api_stopifnot(
-      method == "POST",
-      status = 405,
-      "the request method is not supported"
-    )
-    intersects <- parse_geojson(intersects)
-    check_intersects(intersects)
-  }
-  if (missing(ids)) ids <- NULL
-  if (!is.null(ids)) ids <- parse_str(ids)
-  api_stopifnot(
-    !missing(collections),
-    status = 400,
-    "collections parameter must be provided"
-  )
-  if (!is.null(collections)) {
-    collections <- parse_str(collections)
-    check_collections(collections)
-  }
-  if (!is.null(page)) {
-    page <- parse_int(page[[1]])
-    check_page(page)
-  }
-  # call api search
   api_search(
     api = api,
     req = req,

@@ -1,21 +1,25 @@
 #' Handle API requests
 #'
-#' These are low-level functions responsible for handling requests of the
+#' These are functions responsible for handling requests of the
 #' API endpoint. It interfaces HTTP requests from `plumber` and uses the
-#' `api`, the `req`, and the `res` objects to prepare a response to the
-#' request by dispatching to specific API implementations.
-#'
-#' Users should parse and validate parameters such as `collection_id`,
-#' `bbox`, and `datetime` before calling these functions.
-#' `openstac` provides functions like `parse_geojson()`, `parse_datetime()`,
-#' `parse_dbl()`, `parse_int()`, and `parse_str()` to facilitate this
-#' process.
+#' `api` and the `req` objects to prepare a response to the request by
+#' dispatching to specific API implementations. HTTP input parameters are
+#' parsed internally.
 #'
 #' \itemize{
 #'
-#' \item `create_ogcapi`: Creates an API object for OGC API Features.
+#' \item `create_api`: Creates an API object. It allows users setup
+#'   custom API classes to create response documents.
+#'
+#' \item `create_oafeat`: Creates an API object for OGC API Features.
 #'
 #' \item `create_stac`: Creates an API object for STAC.
+#'
+#' \item `setup_plumber`: Register the Plumber router in the API server.
+#'   It also can enable the Plumber documentation and set the handler
+#'   of errors in the API.
+#'
+#' \item `api_spec`: Generates the OpenAPI specification for the API server.
 #'
 #' \item `api_landing_page`: Handles the STAC `/` endpoint.
 #'
@@ -36,6 +40,14 @@
 #'
 #' }
 #'
+#' @param api_class A character string specifying the custom S3 class
+#'   of the API. It allows advanced users setup new classes to handle
+#'   response documents. Currently, `openstac` supports `oafeat` and
+#'   `stac` S3 classes. To implement a new set of response document
+#'   handlers, users must implement for their new class all generic
+#'   functions declared in `R/doc.R`. For more details, see the
+#'   `github` page of the project.
+#'
 #' @param id A character string specifying the id of the API.
 #'
 #' @param title A character string specifying the title of the API.
@@ -45,6 +57,20 @@
 #' @param conforms_to A character vector specifying the conformance
 #'   standards adhered to by the API. This parameter can be NULL or
 #'   contain additional conformance standards to add to the defaults.
+#'
+#' @param pr The Plumber router object to be associated with the API server.
+#'   For annotated API definition, users can capture the current Plumber
+#'   object by annotating `@plumber` keyword in comment block. See
+#'   references below for more details.
+#'
+#' @param spec_endpoint The endpoint where the API specification
+#'   (OpenAPI) will be available. An `NULL` value disable this feature.
+#'
+#' @param docs_endpoint The endpoint where the API documentation
+#'   (swagger) will be available. An `NULL` value disable this feature.
+#'
+#' @param handle_errors A logical value indicating whether to handle
+#'   errors using the `openstac` default error handler. Default is `TRUE`.
 #'
 #' @param api An object representing the API. This object is typically
 #'   created using either the `create_stac` or `create_ogcapi`
@@ -66,27 +92,22 @@
 #'   the default value is used.
 #'
 #' @param bbox The bounding box for spatial filtering, specified as a
-#'   numeric vector of four coordinates
-#'   (`long_min`, `lat_min`, `long_max`, `lat_max`). Use `parse_dbl()` to
-#'   convert comma-separated string to numeric vector.
+#'   comma-separated string of four coordinates
+#'   (`long_min`,`lat_min`,`long_max`,`lat_max`).
 #'
 #' @param datetime The temporal filter for items. It must be specified
-#'   as a `list(start = start_date, end = end_date, exact = exact_date)`
-#'   object. Use `parse_datetime()` function to convert STAC datetime
-#'   string to this object.
+#'   as a STAC datetime interval or timestamp string
+#'   (e.g. `2020-03-29/2021-12-31`).
 #'
 #' @param intersects The spatial filter for items, specified as a GeoJSON
-#'   geometry object representing the area of interest. Use `parse_geojson()`
-#'   function to convert strings of GeoJSON geometries into an equivalent
-#'   `list()` object.
+#'   geometry object representing the area of interest. The data comes
+#'   as string representing a GeoJSON geometry.
 #'
-#' @param ids A list of item identifiers to filter the search results.
-#'   Use `parse_str()` to convert a comma-separated string to a
-#'   character vector
+#' @param ids A comma-separated string of item identifiers to filter
+#'   the search results.
 #'
-#' @param collections A list of collection identifiers to filter the
-#'   search results. Use `parse_str()` to convert a comma-separated
-#'   string to a character vector.
+#' @param collections A comma-separated string of collection identifiers
+#'   to filter the search results.
 #'
 #' @param page The page number of the results when paginating.
 #'
@@ -96,14 +117,6 @@
 #' @return For API creation functions, returns a api object. For API
 #'   handling functions, returns the document to return as response.
 #'
-#' @seealso
-#' [create_stac()], [create_ogcapi()]: Functions for creating STAC and
-#'   OGC API objects, respectively.
-#'
-#' [parse_int()], [parse_dbl()], [parse_str()], [parse_datetime()],
-#'   [parse_geojson()]: Functions to convert HTTP input strings
-#'   into R data types.
-#'
 #' @references
 #' For more information about the STAC specification,
 #' see: \url{https://stacspec.org/}
@@ -111,10 +124,14 @@
 #' For more information about the OGC API specification,
 #' see: \url{http://www.opengis.net/doc/IS/ogcapi-features-1/1.0}
 #'
+#' For more information about annotated Plumber API definition, see:
+#' \url{https://www.rplumber.io/articles/annotations.html}
+#'
 #' @name api_handling
 #'
 NULL
-#' @keywords internal
+#' @rdname api_handling
+#' @export
 create_api <- function(api_class,
                        title,
                        description,
@@ -136,7 +153,7 @@ create_stac <- function(id,
                         description,
                         conforms_to = NULL, ...) {
   create_api(
-    api_class = c("stac", "ogcapi"),
+    api_class = c("stac", "oafeat"),
     title = title,
     description = description,
     conforms_to = conforms_to,
@@ -146,7 +163,7 @@ create_stac <- function(id,
 }
 #' @rdname api_handling
 #' @export
-create_ogcapi <- function(title,
+create_oafeat <- function(title,
                           description,
                           conforms_to = NULL, ...) {
   # A list of all conformance classes specified in a standard that the
@@ -157,42 +174,27 @@ create_ogcapi <- function(title,
     "http://www.opengis.net/spec/ogcapi-features-1/1.0/conf/geojson"
   )
   create_api(
-    api_class = "ogcapi",
+    api_class = "oafeat",
     title = title,
     description = description,
     conforms_to = c(ogcapi_conforms_to, conforms_to), ...
   )
 }
-#' @keywords internal
-api_env <- function(api) {
-  attr(api, "env")
-}
-#' @keywords internal
-api_attr <- function(api, name) {
-  if (exists(name, envir = api_env(api)))
-    get(name, envir = api_env(api), inherits = FALSE)
-}
-#' @keywords internal
-`api_attr<-` <- function(api, name, value) {
-  assign(name, value, envir = api_env(api), inherits = FALSE)
-  api
-}
 #' @rdname api_handling
 #' @export
-api_setup <- function(api, pr, handle_errors = TRUE) {
+setup_plumber <- function(api,
+                          pr,
+                          spec_endpoint = "/api",
+                          docs_endpoint = "/docs",
+                          handle_errors = TRUE) {
   api_attr(api, "plumber") <- pr
-  plumber::pr_set_docs(pr, FALSE)
+  if (!is.null(spec_endpoint)) {
+    plumber_setup_spec(pr, spec_endpoint)
+    if (!is.null(docs_endpoint))
+      plumber_setup_docs(pr, docs_endpoint, spec_endpoint)
+  }
   if (handle_errors)
     plumber::pr_set_error(pr, api_error_handler)
-  api
-}
-#' @keywords internal
-get_plumber <- function(api) {
-  pr <- api_attr(api, "plumber")
-  if (is.null(pr))
-    api_stop(
-      status = 500,
-      "The API was not setup properly. Please, use ",)
 }
 #' @rdname api_handling
 #' @export
@@ -324,31 +326,5 @@ api_search <- function(api,
     ids = ids,
     collections = collections,
     page = page
-  )
-}
-api_docs <- function(pr) {
-  list(
-    name = "swagger",
-    index = function(version = "3", ...) {
-      swagger::swagger_spec(
-        api_path = paste0(
-          "window.location.origin + ",
-          "window.location.pathname.replace(", "/\\(", "__swagger__\\\\/|",
-          "__swagger__\\\\/", "index.html|", "__docs__\\\\/|",
-          "__docs__\\\\/", "index.html", "\\)$/, ", "\"\"",
-          ") + \"openapi.json\""),
-        version = version)
-    }, static = function(version = "3", ...) {
-      swagger::swagger_path(version)
-  })
-}
-api_spec <- function(api, req) {
-  pr <- get_plumber(api)
-  spec <- pr$getApiSpec()
-  utils::modifyList(
-    list(servers = list(list(
-      url = make_url(get_host(req))
-    ))),
-    spec
   )
 }

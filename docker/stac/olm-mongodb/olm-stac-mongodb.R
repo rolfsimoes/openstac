@@ -91,7 +91,7 @@ function(req, res, collection_id) {
 #* @get /collections/<collection_id>/items
 #* @param collection_id:str The ID of the collection
 #* @param limit:int Maximum number of features to return (default: 10)
-#* @param bbox:str Bounding box (minx,miny,maxx,maxy)
+#* @param bbox:str Bounding box in OGC:CRS84 (long_min,lat_min,long_max,lat_max)
 #* @param datetime:str Datetime filter
 #* @param page:int Pagination parameter (default: 1)
 #* @serializer unboxedJSON

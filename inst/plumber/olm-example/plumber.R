@@ -29,6 +29,12 @@ api <- create_stac(
 db_file <- system.file("db/olm-example.rds", package = "openstac")
 api <- set_db(api, driver = "local", file = db_file)
 
+#* Setup plumber router
+#* @plumber
+function(pr) {
+  setup_plumber(api, pr, spec_endpoint = "/api", docs_endpoint = "/docs")
+}
+
 #* Landing page
 #* @get /
 #* @serializer unboxedJSON
@@ -66,7 +72,7 @@ function(req, res, collection_id) {
 #* @get /collections/<collection_id>/items
 #* @param collection_id:str The ID of the collection
 #* @param limit:int Maximum number of features to return (default: 10)
-#* @param bbox:str Bounding box (xmin,ymin,xmax,ymax)
+#* @param bbox:str Bounding box in OGC:CRS84 (long_min,lat_min,long_max,lat_max)
 #* @param datetime:str Datetime filter
 #* @param page:int Pagination parameter (default: 1)
 #* @serializer unboxedJSON
@@ -103,7 +109,7 @@ function(req, res, collection_id, item_id) {
 #* Search endpoint
 #* @get /search
 #* @param limit:int Maximum number of features to return (default: 10)
-#* @param bbox:str Bounding box (xmin,ymin,xmax,ymax)
+#* @param bbox:str Bounding box in OGC:CRS84 (long_min,lat_min,long_max,lat_max)
 #* @param datetime:str Datetime filter
 #* @param intersects:str GeoJSON geometry to do spatial search
 #* @param ids:str Array of items ID to return

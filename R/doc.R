@@ -49,27 +49,26 @@
 #' @param bbox The bounding box for spatial filtering, specified
 #'   as a numeric vector of four coordinates
 #'   (`long_min`, `lat_min`, `long_max`, `lat_max`). Use
-#'   `parse_dbl()` to convert comma-separated string to numeric
-#'   vector.
+#'   `deparse_array()` to convert it to comma-separated string.
 #'
 #' @param datetime The temporal filter for items. It must be
 #'   specified as a
 #'   `list(start = start_date, end = end_date, exact = exact_date)`
-#'   object. Use `parse_datetime()` function to convert STAC
-#'   datetime string to this object.
+#'   object. Use `deparse_datetime()` function to convert this
+#'   object to a STAC datetime string.
 #'
 #' @param intersects The spatial filter for items, specified as
 #'   a GeoJSON geometry object representing the area of interest.
-#'   Use `parse_geojson()` function to convert strings of GeoJSON
-#'   geometries into an equivalent `list()` object.
+#'   Use `deparse_geojson()` function to convert the GeoJSON
+#'   geometry list into a GeoJSON string.
 #'
 #' @param ids A list of item identifiers to filter the search
-#'   results. Use `parse_str()` to convert a comma-separated string
-#'   to a character vector
+#'   results. Use `deparse_array()` to convert it to a comma-
+#'   separated string.
 #'
 #' @param collections A list of collection identifiers to filter
-#'   the search results. Use `parse_str()` to convert a
-#'   comma-separated string to a character vector.
+#'   the search results. Use `deparse_array()` to convert it to a
+#'   comma-separated string.
 #'
 #' @param page The page number of the results when paginating.
 #'
@@ -77,13 +76,7 @@
 #'   For API handling functions, returns the document to return
 #'   as response.
 #'
-#' @seealso
-#' [create_stac()], [create_ogcapi()]: Functions for creating STAC
-#'   and OGC API objects, respectively.
-#'
-#' [parse_int()], [parse_dbl()], [parse_str()], [parse_datetime()],
-#'   [parse_geojson()]: Functions to convert HTTP input strings
-#'   into R data types.
+#' @seealso [deparse_array()], [deparse_datetime()], [deparse_geojson()]
 #'
 #' @references
 #' For more information about the STAC specification,

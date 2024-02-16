@@ -1,7 +1,7 @@
 #' @export
 new_db.local <- function(driver, file, ...) {
   # driver checkers
-  stopifnot(requireNamespace("rstac"))
+  stopifnot(requireNamespace("rstac", quietly = TRUE))
   stopifnot(file.exists(file))
   data <- readRDS(file)
   stopifnot(is.list(data))

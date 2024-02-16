@@ -1,19 +1,19 @@
 #' @rdname doc_handling
 #' @export
-doc_landing_page.ogcapi <- function(api, req) {
+doc_landing_page.oafeat <- function(api, req) {
   doc <- list(title = api$title, description = api$description)
   doc <- links_landing_page(doc, api, get_host(req), get_method(req))
   doc
 }
 #' @rdname doc_handling
 #' @export
-doc_conformance.ogcapi <- function(api, req) {
+doc_conformance.oafeat <- function(api, req) {
   doc <- list(conformsTo = api$conforms_to)
   doc
 }
 #' @rdname doc_handling
 #' @export
-doc_collections.ogcapi <- function(api, req) {
+doc_collections.oafeat <- function(api, req) {
   db <- get_db(api)
   doc <- list(collections = db_collections(db))
   doc <- links_collections(doc, api, get_host(req), get_method(req))
@@ -21,7 +21,7 @@ doc_collections.ogcapi <- function(api, req) {
 }
 #' @rdname doc_handling
 #' @export
-doc_collection.ogcapi <- function(api, req, collection_id) {
+doc_collection.oafeat <- function(api, req, collection_id) {
   db <- get_db(api)
   check_collection_in_db(db, collection_id)
   doc <- db_collection(db, collection_id)
@@ -30,7 +30,7 @@ doc_collection.ogcapi <- function(api, req, collection_id) {
 }
 #' @rdname doc_handling
 #' @export
-doc_items.ogcapi <- function(api,
+doc_items.oafeat <- function(api,
                              req,
                              collection_id,
                              limit,
@@ -62,7 +62,7 @@ doc_items.ogcapi <- function(api,
 }
 #' @rdname doc_handling
 #' @export
-doc_item.ogcapi <- function(api, req, collection_id, item_id) {
+doc_item.oafeat <- function(api, req, collection_id, item_id) {
   db <- get_db(api)
   check_collection_in_db(db, collection_id)
   check_item_in_db(db, collection_id, item_id)
@@ -72,7 +72,7 @@ doc_item.ogcapi <- function(api, req, collection_id, item_id) {
 }
 #' @keywords internal
 #' @export
-links_landing_page.ogcapi <- function(doc, api, host, method) {
+links_landing_page.oafeat <- function(doc, api, host, method) {
   doc$links  <- list(
     new_link(
       rel = "root",
@@ -137,7 +137,7 @@ links_landing_page.ogcapi <- function(doc, api, host, method) {
 }
 #' @keywords internal
 #' @export
-links_collection.ogcapi <- function(doc, api, host, method) {
+links_collection.oafeat <- function(doc, api, host, method) {
   doc$links <- list(
     new_link(
       rel = "root",
@@ -159,7 +159,7 @@ links_collection.ogcapi <- function(doc, api, host, method) {
 }
 #' @keywords internal
 #' @export
-links_collections.ogcapi <- function(doc, api, host, method) {
+links_collections.oafeat <- function(doc, api, host, method) {
   doc$collections <- lapply(doc$collections, function(collection) {
     links_collection(collection, api, host, method)
   })
@@ -179,7 +179,7 @@ links_collections.ogcapi <- function(doc, api, host, method) {
 }
 #' @keywords internal
 #' @export
-links_item.ogcapi <- function(doc, api, host, method) {
+links_item.oafeat <- function(doc, api, host, method) {
   doc$links <- list(
     new_link(
       rel = "root",
@@ -202,7 +202,7 @@ links_item.ogcapi <- function(doc, api, host, method) {
 }
 #' @keywords internal
 #' @export
-links_items.ogcapi <- function(doc,
+links_items.oafeat <- function(doc,
                                api,
                                host,
                                method,

@@ -138,43 +138,29 @@ doc_search <- function(api,
   UseMethod("doc_search", api)
 }
 #' @keywords internal
-links_landing_page <- function(doc, api, host, method) {
+links_landing_page <- function(doc, api, req) {
   UseMethod("links_landing_page", api)
 }
 #' @keywords internal
-links_collection <- function(doc, api, host, method) {
+links_collection <- function(doc, api, req) {
   UseMethod("links_collection", api)
 }
 #' @keywords internal
-links_collections <- function(doc, api, host, method) {
+links_collections <- function(doc, api, req) {
   UseMethod("links_collections", api)
 }
 #' @keywords internal
-links_item <- function(doc, api, host, method) {
+links_item <- function(doc, api, req) {
   UseMethod("links_item", api)
 }
 #' @keywords internal
 links_items <- function(doc,
                         api,
-                        host,
-                        method,
+                        req,
                         collection_id,
                         limit,
                         bbox,
                         datetime,
                         page) {
   UseMethod("links_items", api)
-}
-#' @keywords internal
-links_search <- function(doc,
-                         api,
-                         host,
-                         method,
-                         limit,
-                         bbox,
-                         datetime,
-                         ids,
-                         collections,
-                         page) {
-  UseMethod("links_search", api)
 }

@@ -1,14 +1,30 @@
 #' @rdname doc_handling
 #' @export
 doc_landing_page.stac <- function(api, req) {
-  doc <- list(
+  doc <- NextMethod("doc_loading_page", api)
+  doc <- c(list(
     stac_version = api$stac_version,
     type = "Catalog",
     id = api$id,
-    title = api$title, description = api$description,
     conformsTo = api$conforms_to
+  ), doc)
+  host <- get_host(api, req)
+  doc <- add_link(
+    doc = doc,
+    rel = "search",
+    href = make_url(host, "/search"),
+    type = "application/geo+json",
+    title = "STAC search",
+    method = "GET"
   )
-  doc <- links_landing_page(doc, api, get_host(req), get_method(req))
+  doc <- add_link(
+    doc = doc,
+    rel = "search",
+    href = make_url(host, "/search"),
+    type = "application/geo+json",
+    title = "STAC search",
+    method = "POST"
+  )
   doc
 }
 #' @rdname doc_handling
@@ -65,141 +81,67 @@ doc_search.stac <- function(api,
     collections = collections,
     page = page
   )
-  doc <- links_search(
-    doc = doc,
-    api = api,
-    host = get_host(req),
-    method = get_method(req),
-    limit = limit,
-    bbox = bbox,
-    datetime = datetime,
-    ids = ids,
-    collections = collections,
-    page = page
-  )
+  # update item links
+  doc$features <- lapply(doc$features, \(item) {
+    links_item(item, api, req)
+  })
+  # basic links
+  doc <- link_root(doc, api, req)
+  doc <- link_self(doc, api, req, "application/geo+json")
+  # add navigation links
+  method <- get_method(req)
+  if (method == "GET") {
+    doc <- links_navigation(
+      doc = doc,
+      api = api,
+      req = req,
+      endpoint = "/search",
+      limit = limit,
+      page = page,
+      bbox = deparse_array(bbox),
+      datetime = deparse_datetime(datetime),
+      ids = ids,
+      collections = collections,
+      type = "application/geo+json"
+    )
+  } else if (method == "POST") {
+    doc <- links_navigagion_post(
+      doc = doc,
+      api = api,
+      req = req,
+      endpoint = "/search",
+      limit = limit,
+      page = page,
+      type = "application/geo+json",
+      merge = TRUE
+    )
+  }
   doc
 }
 #' @keywords internal
 #' @export
-links_landing_page.stac <- function(doc, api, host, method) {
-  NextMethod("links_landing_page", api)
-}
-#' @keywords internal
-#' @export
-links_collection.stac <- function(doc, api, host, method) {
+links_collection.stac <- function(doc, api, req) {
   NextMethod("links_collection", api)
 }
 #' @keywords internal
 #' @export
-links_collections.stac <- function(doc, api, host, method) {
+links_collections.stac <- function(doc, api, req) {
   NextMethod("links_collections", api)
 }
 #' @keywords internal
 #' @export
-links_item.stac <- function(doc, api, host, method) {
+links_item.stac <- function(doc, api, req) {
   NextMethod("links_item", api)
 }
 #' @keywords internal
 #' @export
 links_items.stac <- function(doc,
                              api,
-                             host,
-                             method,
+                             req,
                              collection_id,
                              limit,
                              bbox,
                              datetime,
                              page) {
   NextMethod("links_items", api)
-}
-#' @keywords internal
-#' @export
-links_search.stac <- function(doc,
-                              api,
-                              host,
-                              method,
-                              limit,
-                              bbox,
-                              datetime,
-                              ids,
-                              collections,
-                              page) {
-  pages <- get_pages(doc, limit)
-  # update item links
-  doc$features <- lapply(doc$features, function(item) {
-    links_item(item, api, host, method)
-  })
-  doc$links <- list(
-    new_link(
-      rel = "root",
-      href = make_url(host, "/"),
-      type = "application/json"
-    )
-  )
-  # add navigation links
-  if (method == "GET") {
-    if (page > 1 && page <= pages)
-      doc <- add_link(
-        doc = doc,
-        rel = "prev",
-        href = make_url(
-          host = host,
-          "/search",
-          limit = limit,
-          bbox = deparse_array(bbox),
-          datetime = deparse_datetime(datetime),
-          ids = ids,
-          collections = collections,
-          page = page - 1
-        ),
-        type = "application/geo+json"
-      )
-    if (page < pages)
-      doc <- add_link(
-        doc = doc,
-        rel = "next",
-        href = make_url(
-          host = host,
-          "/search",
-          limit = limit,
-          bbox = deparse_array(bbox),
-          datetime = deparse_datetime(datetime),
-          ids = ids,
-          collections = collections,
-          page = page + 1
-        ),
-        type = "application/geo+json"
-      )
-  } else if (method == "POST") {
-    doc$links <- list(
-      new_link(
-        rel = "root",
-        href = make_url(host, "/"),
-        type = "application/json"
-      )
-    )
-    if (page > 1 && page <= pages)
-      doc <- add_link(
-        doc = doc,
-        rel = "prev",
-        href = make_url(host, "/search"),
-        body = list(
-          page = page - 1
-        ),
-        merge = TRUE,
-        type = "application/geo+json"
-      )
-    if (page < pages)
-      doc <- add_link(
-        doc = doc,
-        rel = "next",
-        href = make_url(host, "/search"),
-        body = list(
-          page = page + 1
-        ),
-        merge = TRUE,
-        type = "application/geo+json"
-      )
-  }
-  doc
 }

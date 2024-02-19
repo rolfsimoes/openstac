@@ -2,7 +2,33 @@
 #' @export
 doc_landing_page.oafeat <- function(api, req) {
   doc <- list(title = api$title, description = api$description)
-  doc <- links_landing_page(doc, api, get_host(req), get_method(req))
+  doc <- link_root(doc, api, req)
+  doc <- link_self(doc, api, req, "application/json")
+  doc <- link_spec(doc, api, req)
+  doc <- link_docs(doc, api, req)
+  host <- get_host(api, req)
+  doc <- update_link(
+    doc = doc,
+    rel = "conformance",
+    href = make_url(host, "/conformance"),
+    type = "application/json"
+  )
+  doc <- update_link(
+    doc = doc,
+    rel = "data",
+    href = make_url(host, "/collections"),
+    type = "application/json"
+  )
+  db <- get_db(api)
+  for (collection in db_collections(db)) {
+    doc <- add_link(
+      doc = doc,
+      rel = "child",
+      href = make_url(host, "/collections", doc$id),
+      type = "application/json",
+      title = doc$title
+    )
+  }
   doc
 }
 #' @rdname doc_handling
@@ -16,7 +42,7 @@ doc_conformance.oafeat <- function(api, req) {
 doc_collections.oafeat <- function(api, req) {
   db <- get_db(api)
   doc <- list(collections = db_collections(db))
-  doc <- links_collections(doc, api, get_host(req), get_method(req))
+  doc <- links_collections(doc, api, req)
   doc
 }
 #' @rdname doc_handling
@@ -25,7 +51,7 @@ doc_collection.oafeat <- function(api, req, collection_id) {
   db <- get_db(api)
   check_collection_in_db(db, collection_id)
   doc <- db_collection(db, collection_id)
-  doc <- links_collection(doc, api, get_host(req), get_method(req))
+  doc <- links_collection(doc, api, req)
   doc
 }
 #' @rdname doc_handling
@@ -50,8 +76,7 @@ doc_items.oafeat <- function(api,
   doc <- links_items(
     doc = doc,
     api = api,
-    host = get_host(req),
-    method = get_method(req),
+    req = req,
     collection_id = collection_id,
     limit = limit,
     bbox = bbox,
@@ -67,136 +92,45 @@ doc_item.oafeat <- function(api, req, collection_id, item_id) {
   check_collection_in_db(db, collection_id)
   check_item_in_db(db, collection_id, item_id)
   doc <- db_item(db, collection_id, item_id)
-  doc <- links_item(doc, api, get_host(req), get_method(req))
+  doc <- links_item(doc, api, req)
   doc
 }
 #' @keywords internal
 #' @export
-links_landing_page.oafeat <- function(doc, api, host, method) {
-  doc$links  <- list(
-    new_link(
-      rel = "root",
-      href = make_url(host, "/"),
-      type = "application/json"
-    ),
-    new_link(
-      rel = "self",
-      href = make_url(host, "/"),
-      type = "application/json"
-    ),
-    new_link(
-      rel = "conformance",
-      href = make_url(host, "/conformance"),
-      type = "application/json"
-    ),
-    new_link(
-      rel = "data",
-      href = make_url(host, "/collections"),
-      type = "application/json"
-    ),
-    new_link(
-      rel = "search",
-      href = make_url(host, "/search"),
-      type = "application/geo+json",
-      title = "STAC search",
-      method = "GET"
-    ),
-    new_link(
-      rel = "search",
-      href = make_url(host, "/search"),
-      type = "application/geo+json",
-      title = "STAC search",
-      method = "POST"
-    ),
-    new_link(
-      rel = "service-doc",
-      href = make_url(host, "/__docs__/"),
-      type = "text/html",
-      title = "the API documentation"
-    ),
-    new_link(
-      rel = "service-spec",
-      href = make_url(host, "/openapi.json"),
-      type = "application/vnd.oai.openapi+json;version=3.0",
-      title = "API conformance classes implemented by this server"
-    )
-  )
-  db <- get_db(api)
-  doc$links <- c(
-    doc$links,
-    lapply(db_collections(db), function(doc) {
-      new_link(
-        rel = "child",
-        href = make_url(host, "/collections", doc$id),
-        type = "application/json",
-        title = doc$title
-      )
-    })
+links_collection.oafeat <- function(doc, api, req) {
+  doc <- link_root(doc, api, req)
+  doc <- link_self(doc, api, req, "application/json")
+  doc <- link_parent(doc, api, req)
+  host <- get_host(api, req)
+  doc <- update_link(
+    doc = doc,
+    rel = "item",
+    href = make_url(host, "/collections", doc$id, "items"),
+    type = "application/geo+json"
   )
   doc
 }
 #' @keywords internal
 #' @export
-links_collection.oafeat <- function(doc, api, host, method) {
-  doc$links <- list(
-    new_link(
-      rel = "root",
-      href = make_url(host, "/"),
-      type = "application/json"
-    ),
-    new_link(
-      rel = "self",
-      href = make_url(host, "/collections", doc$id),
-      type = "application/json"
-    ),
-    new_link(
-      rel = "item",
-      href = make_url(host, "/collections", doc$id, "items"),
-      type = "application/geo+json"
-    )
-  )
-  doc
-}
-#' @keywords internal
-#' @export
-links_collections.oafeat <- function(doc, api, host, method) {
+links_collections.oafeat <- function(doc, api, req) {
   doc$collections <- lapply(doc$collections, function(collection) {
-    links_collection(collection, api, host, method)
+    links_collection(collection, api, req)
   })
-  doc$links <- list(
-    new_link(
-      rel = "root",
-      href = make_url(host, "/"),
-      type = "application/json"
-    ),
-    new_link(
-      rel = "self",
-      href = make_url(host, "/collections"),
-      type = "application/json"
-    )
-  )
+  doc <- link_root(doc, api, req)
+  doc <- link_self(doc, api, req, "application/json")
   doc
 }
 #' @keywords internal
 #' @export
-links_item.oafeat <- function(doc, api, host, method) {
-  doc$links <- list(
-    new_link(
-      rel = "root",
-      href = make_url(host, "/"),
-      type = "application/json"
-    ),
-    new_link(
-      rel = "self",
-      href = make_url(host, "/collections", doc$collection,
-                      "items", doc$id),
-      type = "application/geo+json"
-    ),
-    new_link(
-      rel = "collection",
-      href = make_url(host, "/collections", doc$collection),
-      type = "application/json"
-    )
+links_item.oafeat <- function(doc, api, req) {
+  doc <- link_root(doc, api, req)
+  doc <- link_self(doc, api, req, "application/geo+json")
+  host <- get_host(api, req)
+  doc <- update_link(
+    doc = doc,
+    rel = "collection",
+    href = make_url(host, "/collections", doc$collection),
+    type = "application/json"
   )
   doc
 }
@@ -204,17 +138,19 @@ links_item.oafeat <- function(doc, api, host, method) {
 #' @export
 links_items.oafeat <- function(doc,
                                api,
-                               host,
-                               method,
+                               req,
                                collection_id,
                                limit,
                                bbox,
                                datetime,
                                page) {
+  doc <- link_root(doc, api, req)
+  doc <- link_self(doc, api, req, "application/geo+json")
+  host <- get_host(api, req)
   pages <- get_pages(doc, limit)
   # update item links
   doc$features <- lapply(doc$features, function(item) {
-    links_item(item, api, host, method)
+    links_item(item, api, req)
   })
   doc$links <- list(
     new_link(

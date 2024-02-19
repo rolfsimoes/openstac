@@ -8,7 +8,6 @@ get_crs <- function(crs_name) {
     class = "crs"
   )
 }
-
 as_bbox <- function(x) {
   x <- unlist(x, TRUE, FALSE)
   stopifnot(length(x) == 4)
@@ -17,7 +16,6 @@ as_bbox <- function(x) {
     class = "bbox"
   )
 }
-
 bbox_as_polygon <- function(bbox) {
   bbox <- as_bbox(bbox)
   coords <- matrix(
@@ -36,7 +34,9 @@ bbox_as_polygon <- function(bbox) {
     n_empty = 0L
   )
 }
-
 get_pages <- function(items, limit) {
   ceiling(items$numberMatched / limit)
+}
+is_absolute_url <- function(url) {
+  grepl("^.+://.+$", url)
 }

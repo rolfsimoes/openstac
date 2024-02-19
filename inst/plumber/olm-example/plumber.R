@@ -2,7 +2,7 @@
 #* @apiDescription Example of Spatio-Temporal Asset Catalog for global
 #*   layers provided by OpenLandMap and maintaned by OpenGeoHub Foundation
 #* @apiVersion 1.0.0
-#* @apiBasePath /
+#* @apiBasePath /v1
 
 # Load libraries
 library(openstac)
@@ -32,7 +32,14 @@ api <- set_db(api, driver = "local", file = db_file)
 #* Setup plumber router
 #* @plumber
 function(pr) {
-  setup_plumber(api, pr, spec_endpoint = "/api", docs_endpoint = "/docs")
+  setup_plumber(
+    api = api,
+    pr = pr,
+    handle_errors = TRUE,
+    api_base_url = "/stac/v1",
+    spec_endpoint = "/api",
+    docs_endpoint = "/docs"
+  )
 }
 
 #* Landing page

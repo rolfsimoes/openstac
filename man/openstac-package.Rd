@@ -4,9 +4,9 @@
 \name{openstac-package}
 \alias{openstac-package}
 \alias{openstac}
-\title{openstac: R STAC Server}
+\title{openstac: STAC API Server}
 \description{
-This package implements an STAC API server for R language.
+Implements STAC and OGC API Features server. Users can connect to MongoDB database to create robust STAC API servers in production environments. With streamlined workflows for generating STAC documents and deploying datasets, users can easily share their geospatial data with others. openstac design facilitates package extension to accommodate additional components of the STAC specification.
 }
 \section{Purpose}{
 

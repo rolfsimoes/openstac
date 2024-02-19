@@ -24,9 +24,11 @@ create_oafeat(title, description, conforms_to = NULL, ...)
 setup_plumber(
   api,
   pr,
+  ...,
+  handle_errors = TRUE,
+  api_base_url = NULL,
   spec_endpoint = "/api",
-  docs_endpoint = "/docs",
-  handle_errors = TRUE
+  docs_endpoint = "/docs"
 )
 
 api_landing_page(api, req, res)
@@ -84,14 +86,14 @@ For annotated API definition, users can capture the current Plumber
 object by annotating \verb{@plumber} keyword in comment block. See
 references below for more details.}
 
+\item{handle_errors}{A logical value indicating whether to handle
+errors using the \code{openstac} default error handler. Default is \code{TRUE}.}
+
 \item{spec_endpoint}{The endpoint where the API specification
 (OpenAPI) will be available. An \code{NULL} value disable this feature.}
 
 \item{docs_endpoint}{The endpoint where the API documentation
 (swagger) will be available. An \code{NULL} value disable this feature.}
-
-\item{handle_errors}{A logical value indicating whether to handle
-errors using the \code{openstac} default error handler. Default is \code{TRUE}.}
 
 \item{req}{The request object from the \code{plumber} package, containing
 information about the HTTP request made to the API endpoint.}

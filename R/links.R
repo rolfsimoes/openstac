@@ -37,10 +37,19 @@ make_url <- function(host, ...) {
     params <- dots[names(dots) != ""]
   }
   path <- paste0(segments, collapse = "/")
-  href <- paste0(host, path)
+  url <- paste0(host, path)
   query <- paste(names(params), unname(params), sep = "=", collapse = "&")
-  if (query != "") href <- paste0(href, "?", query)
-  href
+  if (query != "") url <- paste0(url, "?", query)
+  url
+}
+root_url <- function(api, req) {
+  make_url(get_host(api, req), "/")
+}
+self_url <- function(api, req) {
+  make_url(get_host(api, req), get_path(req))
+}
+parent_url <- function(api, req) {
+  sub("((://)?[^/]+)/[^/]*$", "\\1", self_url(api, req))
 }
 #' @keywords internal
 new_link <- function(rel, href, ...) {
@@ -57,8 +66,102 @@ add_link <- function(doc, rel, href, ...) {
 #' @rdname link_functions
 #' @export
 update_link <- function(doc, rel, href, ...) {
-  select <- vapply(doc$links, \(x) !is.null(x$rel) && x$rel != rel)
+  select <- vapply(doc$links, \(x) !is.null(x$rel) && x$rel != rel, logical(1))
   doc$links <- doc$links[select]
   doc$links <- c(doc$links, list(new_link(rel, href, ...)))
   doc
 }
+#' @keywords internal
+link_root <- function(doc, api, req) {
+  update_link(doc, "root", root_url(api, req), type = "application/json")
+}
+#' @keywords internal
+link_self <- function(doc, api, req, type) {
+  update_link(doc, "self", self_url(api, req), type = type)
+}
+#' @keywords internal
+link_parent <- function(doc, api, req) {
+  update_link(doc, "parent", parent_url(api, req), type = "application/json")
+}
+links_navigation <- function(doc,
+                             api,
+                             req,
+                             endpoint,
+                             limit,
+                             page, ...,
+                             type) {
+  host <- get_host(api, req)
+  pages <- get_pages(doc, limit)
+  if (page > 1 && page <= pages) {
+    url <- make_url(host, endpoint, limit = limit, page = page - 1, ...)
+    doc <- update_link(doc, "prev", url, type = type)
+  }
+  if (page < pages) {
+    url <- make_url(host, endpoint, limit = limit, page = page + 1, ...)
+    doc <- update_link(doc, "next", url, type = type)
+  }
+  doc
+}
+links_navigagion_post <- function(doc,
+                                  api,
+                                  req,
+                                  endpoint,
+                                  limit,
+                                  page, ...,
+                                  type,
+                                  merge) {
+  host <- get_host(api, req)
+  pages <- get_pages(doc, limit)
+  if (page > 1 && page <= pages)
+    doc <- add_link(
+      doc = doc,
+      rel = "prev",
+      href = make_url(host, endpoint),
+      body = list(
+        page = page - 1,
+        ...
+      ),
+      merge = merge,
+      type = type
+    )
+  if (page < pages)
+    doc <- add_link(
+      doc = doc,
+      rel = "next",
+      href = make_url(host, endpoint),
+      body = list(
+        page = page + 1,
+        ...
+      ),
+      merge = merge,
+      type = type
+    )
+  doc
+}
+link_spec <- function(doc, api, req) {
+  spec_endpoint <- api_attr(api, "spec_endpoint")
+  if (is.null(spec_endpoint)) return(doc)
+  url <- make_url(get_host(api, req), spec_endpoint)
+  doc <- update_link(
+    doc = doc,
+    rel = "service-spec",
+    href = url,
+    type = "application/vnd.oai.openapi+json;version=3.0",
+    title = "API conformance classes implemented by this server"
+  )
+  doc
+}
+link_docs <- function(doc, api, req) {
+  docs_endpoint <- api_attr(api, "docs_endpoint")
+  if (is.null(docs_endpoint)) return(doc)
+  url <- make_url(get_host(api, req), docs_endpoint)
+  doc <- update_link(
+    doc = doc,
+    rel = "service-doc",
+    href = url,
+    type = "text/html",
+    title = "The API documentation"
+  )
+  doc
+}
+

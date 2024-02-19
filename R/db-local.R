@@ -151,24 +151,28 @@ local_filter_datetime <- function(items, datetime) {
 }
 
 local_filter_exact_date <- function(items, exact_date) {
+  if (length(items$features) == 0) return(items)
   select <- local_items_datetime(items) == as.Date(exact_date)
   items$features <- items$features[select]
   items
 }
 
 local_filter_start_date <- function(items, start_date) {
+  if (length(items$features) == 0) return(items)
   select <- local_items_datetime(items) >= as.Date(start_date)
   items$features <- items$features[select]
   items
 }
 
 local_filter_end_date <- function(items, end_date) {
+  if (length(items$features) == 0) return(items)
   select <- local_items_datetime(items) <= as.Date(end_date)
   items$features <- items$features[select]
   items
 }
 
 local_filter_spatial <- function(items, geom) {
+  if (length(items$features) == 0) return(items)
   select <- rstac::items_intersects(items, geom)
   items$features <- items$features[select]
   items

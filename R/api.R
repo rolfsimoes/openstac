@@ -183,18 +183,21 @@ create_oafeat <- function(title,
 #' @rdname api_handling
 #' @export
 setup_plumber <- function(api,
-                          pr,
+                          pr, ...,
+                          handle_errors = TRUE,
+                          api_base_url = NULL,
                           spec_endpoint = "/api",
-                          docs_endpoint = "/docs",
-                          handle_errors = TRUE) {
+                          docs_endpoint = "/docs") {
+  stopifnot(is_absolute_url(api_base_url))
   api_attr(api, "plumber") <- pr
-  if (!is.null(spec_endpoint)) {
-    plumber_setup_spec(pr, spec_endpoint)
-    if (!is.null(docs_endpoint))
-      plumber_setup_docs(pr, docs_endpoint, spec_endpoint)
-  }
   if (handle_errors)
     plumber::pr_set_error(pr, api_error_handler)
+  api_attr(api, "api_base_url") <- api_base_url
+  if (!is.null(spec_endpoint)) {
+    setup_plumber_spec(api, pr, spec_endpoint)
+    if (!is.null(docs_endpoint))
+      setup_plumber_docs(api, pr, docs_endpoint, spec_endpoint)
+  }
 }
 #' @rdname api_handling
 #' @export

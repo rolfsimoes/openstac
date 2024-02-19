@@ -55,17 +55,12 @@ NULL
 #' @keywords internal
 check_rfc3339 <- function(datetime) {
   if (is.null(datetime)) return()
+  datetime <- tryCatch(as.Date(datetime), error = function(e) NA)
   api_stopifnot(
     !is.na(datetime),
     status = 400,
     "datetime is not a valid time stamp or time interval"
   )
-}
-#' @keywords internal
-check_datetime <- function(datetime) {
-  check_rfc3339(datetime$start)
-  check_rfc3339(datetime$end)
-  check_rfc3339(datetime$exact)
 }
 #' @rdname validate_functions
 #' @export

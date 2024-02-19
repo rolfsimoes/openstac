@@ -27,6 +27,20 @@
 #'
 #' @name link_functions
 NULL
+#' @rdname link_functions
+#' @export
+add_link <- function(doc, rel, href, ...) {
+  doc$links <- c(doc$links, list(new_link(rel, href, ...)))
+  doc
+}
+#' @rdname link_functions
+#' @export
+update_link <- function(doc, rel, href, ...) {
+  select <- vapply(doc$links, \(x) !is.null(x$rel) && x$rel != rel, logical(1))
+  doc$links <- doc$links[select]
+  doc$links <- c(doc$links, list(new_link(rel, href, ...)))
+  doc
+}
 #' @keywords internal
 make_url <- function(host, ...) {
   dots <- c(...)
@@ -42,12 +56,15 @@ make_url <- function(host, ...) {
   if (query != "") url <- paste0(url, "?", query)
   url
 }
+#' @keywords internal
 root_url <- function(api, req) {
   make_url(get_host(api, req), "/")
 }
+#' @keywords internal
 self_url <- function(api, req) {
   make_url(get_host(api, req), get_path(req))
 }
+#' @keywords internal
 parent_url <- function(api, req) {
   sub("((://)?[^/]+)/[^/]*$", "\\1", self_url(api, req))
 }
@@ -56,20 +73,6 @@ new_link <- function(rel, href, ...) {
   dots <- list(...)
   not_null <- !vapply(dots, is.null, logical(1), USE.NAMES = FALSE)
   c(list(rel = rel, href = href), dots[not_null])
-}
-#' @rdname link_functions
-#' @export
-add_link <- function(doc, rel, href, ...) {
-  doc$links <- c(doc$links, list(new_link(rel, href, ...)))
-  doc
-}
-#' @rdname link_functions
-#' @export
-update_link <- function(doc, rel, href, ...) {
-  select <- vapply(doc$links, \(x) !is.null(x$rel) && x$rel != rel, logical(1))
-  doc$links <- doc$links[select]
-  doc$links <- c(doc$links, list(new_link(rel, href, ...)))
-  doc
 }
 #' @keywords internal
 link_root <- function(doc, api, req) {

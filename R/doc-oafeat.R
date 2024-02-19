@@ -2,39 +2,22 @@
 #' @export
 doc_landing_page.oafeat <- function(api, req) {
   doc <- list(title = api$title, description = api$description)
-  doc <- link_root(doc, api, req)
-  doc <- link_self(doc, api, req, "application/json")
-  doc <- link_spec(doc, api, req)
-  doc <- link_docs(doc, api, req)
-  host <- get_host(api, req)
-  doc <- update_link(
-    doc = doc,
-    rel = "conformance",
-    href = make_url(host, "/conformance"),
-    type = "application/json"
-  )
-  doc <- update_link(
-    doc = doc,
-    rel = "data",
-    href = make_url(host, "/collections"),
-    type = "application/json"
-  )
-  db <- get_db(api)
-  for (collection in db_collections(db)) {
-    doc <- add_link(
-      doc = doc,
-      rel = "child",
-      href = make_url(host, "/collections", doc$id),
-      type = "application/json",
-      title = doc$title
-    )
-  }
+  doc <- links_landing_page(doc, api, req)
   doc
 }
 #' @rdname doc_handling
 #' @export
 doc_conformance.oafeat <- function(api, req) {
-  doc <- list(conformsTo = api$conforms_to)
+  # A list of all conformance classes specified in a standard that the
+  # server conforms to.
+  conforms_to <- api$conforms_to
+  if (is.null(api$conforms_to))
+    conforms_to <- c(
+      "http://www.opengis.net/spec/ogcapi-features-1/1.0/conf/core",
+      "http://www.opengis.net/spec/ogcapi-features-1/1.0/conf/oas30",
+      "http://www.opengis.net/spec/ogcapi-features-1/1.0/conf/geojson"
+    )
+  doc <- list(conformsTo = conforms_to)
   doc
 }
 #' @rdname doc_handling
@@ -97,17 +80,34 @@ doc_item.oafeat <- function(api, req, collection_id, item_id) {
 }
 #' @keywords internal
 #' @export
-links_collection.oafeat <- function(doc, api, req) {
+links_landing_page.oafeat <- function(doc, api, req) {
   doc <- link_root(doc, api, req)
   doc <- link_self(doc, api, req, "application/json")
-  doc <- link_parent(doc, api, req)
+  doc <- link_spec(doc, api, req)
+  doc <- link_docs(doc, api, req)
   host <- get_host(api, req)
   doc <- update_link(
     doc = doc,
-    rel = "item",
-    href = make_url(host, "/collections", doc$id, "items"),
-    type = "application/geo+json"
+    rel = "conformance",
+    href = make_url(host, "/conformance"),
+    type = "application/json"
   )
+  doc <- update_link(
+    doc = doc,
+    rel = "data",
+    href = make_url(host, "/collections"),
+    type = "application/json"
+  )
+  db <- get_db(api)
+  for (collection in db_collections(db)) {
+    doc <- add_link(
+      doc = doc,
+      rel = "child",
+      href = make_url(host, "/collections", doc$id),
+      type = "application/json",
+      title = doc$title
+    )
+  }
   doc
 }
 #' @keywords internal
@@ -122,15 +122,16 @@ links_collections.oafeat <- function(doc, api, req) {
 }
 #' @keywords internal
 #' @export
-links_item.oafeat <- function(doc, api, req) {
+links_collection.oafeat <- function(doc, api, req) {
   doc <- link_root(doc, api, req)
-  doc <- link_self(doc, api, req, "application/geo+json")
+  doc <- link_self(doc, api, req, "application/json")
+  doc <- link_parent(doc, api, req)
   host <- get_host(api, req)
   doc <- update_link(
     doc = doc,
-    rel = "collection",
-    href = make_url(host, "/collections", doc$collection),
-    type = "application/json"
+    rel = "item",
+    href = make_url(host, "/collections", doc$id, "items"),
+    type = "application/geo+json"
   )
   doc
 }
@@ -211,5 +212,19 @@ links_items.oafeat <- function(doc,
       ),
       type = "application/geo+json"
     )
+  doc
+}
+#' @keywords internal
+#' @export
+links_item.oafeat <- function(doc, api, req) {
+  doc <- link_root(doc, api, req)
+  doc <- link_self(doc, api, req, "application/geo+json")
+  host <- get_host(api, req)
+  doc <- update_link(
+    doc = doc,
+    rel = "collection",
+    href = make_url(host, "/collections", doc$collection),
+    type = "application/json"
+  )
   doc
 }

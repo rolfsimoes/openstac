@@ -109,7 +109,8 @@ get_host <- function(api, req) {
   if ("HTTP_HOST" %in% names(req))
     return(paste0(req$rook.url_scheme, "://", req$HTTP_HOST))
   host <- paste0(req$rook.url_scheme, "://", req$SERVER_NAME)
-  if (nzchar(req$SERVER_PORT) && req$SERVER_PORT != "80")
+  if (!is.null(req$SERVER_PORT) && nzchar(req$SERVER_PORT) &&
+      req$SERVER_PORT != "80")
     host <- paste0(host, ":", req$SERVER_PORT)
   host
 }
@@ -158,7 +159,8 @@ setup_plumber_spec <- function(api, pr, spec_endpoint) {
     pr = pr,
     path = spec_endpoint,
     handler = spec_handler,
-    serializer = plumber::serializer_unboxed_json()
+    serializer = plumber::serializer_unboxed_json(),
+    tag = "API"
   )
 }
 #' @keywords internal
@@ -182,12 +184,14 @@ setup_plumber_docs <- function(api, pr, docs_endpoint, spec_endpoint) {
     pr = pr,
     path = paste0(docs_endpoint, "/index.html"),
     handler = docs_handler,
-    serializer = plumber::serializer_html()
+    serializer = plumber::serializer_html(),
+    tag = "API"
   )
   plumber::pr_get(
     pr = pr,
     path = paste0(docs_endpoint, "/"),
     handler = docs_handler,
-    serializer = plumber::serializer_html()
+    serializer = plumber::serializer_html(),
+    tag = "API"
   )
 }

@@ -8,29 +8,25 @@ doc_landing_page.stac <- function(api, req) {
     id = api$id,
     conformsTo = api$conforms_to
   ), doc)
-  host <- get_host(api, req)
-  doc <- add_link(
-    doc = doc,
-    rel = "search",
-    href = make_url(host, "/search"),
-    type = "application/geo+json",
-    title = "STAC search",
-    method = "GET"
-  )
-  doc <- add_link(
-    doc = doc,
-    rel = "search",
-    href = make_url(host, "/search"),
-    type = "application/geo+json",
-    title = "STAC search",
-    method = "POST"
-  )
+  doc <- links_landing_page(doc, api, req)
   doc
 }
 #' @rdname doc_handling
 #' @export
 doc_conformance.stac <- function(api, req) {
-  NextMethod("doc_conformance", api)
+  doc <- NextMethod("doc_conformance", api)
+  # A list of all conformance classes specified in a standard that the
+  # server conforms to.
+  conforms_to <- api$conforms_to
+  if (is.null(api$conforms_to))
+    conforms_to <- c(
+      "https://api.stacspec.org/v1.0.0/core",
+      "https://api.stacspec.org/v1.0.0/collections",
+      "https://api.stacspec.org/v1.0.0/item-search",
+      "https://api.stacspec.org/v1.0.0/ogcapi-features"
+    )
+  doc <- list(conformsTo = c(doc$conformsTo, conforms_to))
+  doc
 }
 #' @rdname doc_handling
 #' @export
@@ -81,6 +77,82 @@ doc_search.stac <- function(api,
     collections = collections,
     page = page
   )
+  doc <- links_search(
+    doc = doc,
+    api = api,
+    req = req,
+    limit = limit,
+    bbox = bbox,
+    datetime = datetime,
+    intersects = intersects,
+    ids = ids,
+    collections = collections,
+    page = page
+  )
+  doc
+}
+#' @keywords internal
+#' @export
+links_landing_page.stac <- function(doc, api, req) {
+  doc <- NextMethod("links_landing_page", api)
+  host <- get_host(api, req)
+  doc <- add_link(
+    doc = doc,
+    rel = "search",
+    href = make_url(host, "/search"),
+    type = "application/geo+json",
+    title = "STAC search",
+    method = "GET"
+  )
+  doc <- add_link(
+    doc = doc,
+    rel = "search",
+    href = make_url(host, "/search"),
+    type = "application/geo+json",
+    title = "STAC search",
+    method = "POST"
+  )
+  doc
+}
+#' @keywords internal
+#' @export
+links_collections.stac <- function(doc, api, req) {
+  NextMethod("links_collections", api)
+}
+#' @keywords internal
+#' @export
+links_collection.stac <- function(doc, api, req) {
+  NextMethod("links_collection", api)
+}
+#' @keywords internal
+#' @export
+links_items.stac <- function(doc,
+                             api,
+                             req,
+                             collection_id,
+                             limit,
+                             bbox,
+                             datetime,
+                             page) {
+  NextMethod("links_items", api)
+}
+#' @keywords internal
+#' @export
+links_item.stac <- function(doc, api, req) {
+  NextMethod("links_item", api)
+}
+#' @keywords internal
+#' @export
+links_search.stac <- function(doc,
+                              api,
+                              req,
+                              limit,
+                              bbox,
+                              datetime,
+                              intersects,
+                              ids,
+                              collections,
+                              page) {
   # update item links
   doc$features <- lapply(doc$features, \(item) {
     links_item(item, api, req)
@@ -117,31 +189,4 @@ doc_search.stac <- function(api,
     )
   }
   doc
-}
-#' @keywords internal
-#' @export
-links_collection.stac <- function(doc, api, req) {
-  NextMethod("links_collection", api)
-}
-#' @keywords internal
-#' @export
-links_collections.stac <- function(doc, api, req) {
-  NextMethod("links_collections", api)
-}
-#' @keywords internal
-#' @export
-links_item.stac <- function(doc, api, req) {
-  NextMethod("links_item", api)
-}
-#' @keywords internal
-#' @export
-links_items.stac <- function(doc,
-                             api,
-                             req,
-                             collection_id,
-                             limit,
-                             bbox,
-                             datetime,
-                             page) {
-  NextMethod("links_items", api)
 }

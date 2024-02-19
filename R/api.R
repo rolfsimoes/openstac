@@ -277,10 +277,11 @@ api_search <- function(api,
   # check parameters
   if (!is.null(limit)) {
     limit <- parse_int(limit[[1]])
+    # TODO: set max value in config
     check_limit(limit, min = 1, max = 10000)
   }
-  if (missing(bbox)) bbox <- NULL
-  if (missing(intersects)) intersects <- NULL
+  if (missing(bbox) || bbox == "") bbox <- NULL
+  if (missing(intersects) || intersects == "") intersects <- NULL
   api_stopifnot(
     is.null(bbox) || is.null(intersects),
     status = 400,

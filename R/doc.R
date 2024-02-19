@@ -164,3 +164,15 @@ links_items <- function(doc,
                         page) {
   UseMethod("links_items", api)
 }
+links_search <- function(doc,
+                         api,
+                         req,
+                         limit,
+                         bbox,
+                         datetime,
+                         intersects,
+                         ids,
+                         collections,
+                         page) {
+  UseMethod("links_search", api)
+}

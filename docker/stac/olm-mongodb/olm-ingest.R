@@ -20,6 +20,13 @@ update_db <- function(db, collection) {
           coord[c(2, 1)]
         })
     }
+    items$bbox[c(1, 2)] <- pmax(items$bbox[c(1, 2)], c(-180, -90))
+    items$bbox[c(3, 4)] <- pmin(items$bbox[c(3, 4)], c(180, 90))
+    item$geometry$coordinates[[1]] <-
+      lapply(item$geometry$coordinates[[1]], function(coord) {
+        coord <- pmax(coord, c(-180, -90))
+        coord <- pmin(coord, c(180, 90))
+      })
     # ... fix gsd
     if ("gsd" %in% names(item$properties))
       item$properties$gsd <- as.numeric(item$properties$gsd)
@@ -41,15 +48,18 @@ update_db <- function(db, collection) {
   items$links <- NULL
   # update db
   # ... call mongodb ingest functions <<<<<<<<<<<<<<
-  db$collections$push(collection)
+  db$collections$insert(collection, auto_unbox = TRUE)
   for (item in items$features) {
-    db$items$push(item)
+    db$items$insert(item, auto_unbox = TRUE)
   }
+  db$collections$index(add = '{"id":1}')
+  db$items$index(add='{"collection":1,"id":1}')
+  db$items$index(add='{"geometry":"2dsphere"}')
 }
 
 create_db <- function(catalog_url, db_name, db_url, overwrite = FALSE) {
   rel <- NULL
-  catalog <- rstac::stac_read(catalog_url)
+  catalog <- rstac::read_stac(catalog_url)
   # prepare db
   db <- list(
     collections = mongolite::mongo(collection = "collections", db = db_name, url = db_url),
@@ -69,7 +79,7 @@ create_db <- function(catalog_url, db_name, db_url, overwrite = FALSE) {
 # OpenLandMap
 create_db(
   catalog_url = "https://s3.eu-central-1.wasabisys.com/stac/openlandmap/catalog.json",
-  db_name = "docker/olm/openlandmap.rds",
-  db_url = "mongodb::/localhost:3453",
+  db_name = "openlandmap",
+  db_url = "mongodb://0.0.0.0:27017",
   overwrite = FALSE
 )

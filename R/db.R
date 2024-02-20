@@ -25,8 +25,7 @@
 #'
 #' @name db_functions
 NULL
-
-drivers <- c("local")
+drivers <- c("local", "mongodb")
 
 #' @rdname db_functions
 #' @export

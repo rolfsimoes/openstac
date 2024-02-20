@@ -212,7 +212,7 @@ list_to_collection <- function(collection) {
   structure(collection, class = c("doc_collection", "rstac_doc","list"))
 }
 
-mongo_items <- function(db, query, limit=0, page=0) {
+mongo_items <- function(db, query, limit = 0, page = 0) {
   skip = (page - 1) * limit
   result <- db$items$iterate(
     query = jsonlite::toJSON(query, auto_unbox = TRUE),
@@ -227,31 +227,35 @@ mongo_items <- function(db, query, limit=0, page=0) {
   }
   structure(
     list(
-      type="FeatureCollection",
-      features=items,
+      type = "FeatureCollection",
+      features = items,
       links = list()
     ),
-    class=c("doc_items", "rstac_doc","list")
+    class = c("doc_items", "rstac_doc","list")
   )
 }
 
 mongo_collections <- function(db, query) {
-  result <- db$collections$iterate(query=jsonlite::toJSON(query, auto_unbox = TRUE))
+  result <- db$collections$iterate(
+    query = jsonlite::toJSON(query, auto_unbox = TRUE)
+  )
   collections <- list()
-  while(!is.null(x <- result$one())){
+  x <- result$one()
+  while (!is.null(x)) {
     collection  <- list_to_collection(x)
     collections <- append(collections, list(collection))
+    x <- result$one()
   }
   structure(
     collections,
-    class=c("doc_collections", "rstac_doc","list")
+    class = c("doc_collections", "rstac_doc","list")
   )
 }
 
 # ---- operators ----
 
 mongo_in <- function(field, values) {
-  query <- list(list("$in"=as.list(values)))
+  query <- list(list("$in" = as.list(values)))
   names(query) = field
   query
 }
@@ -260,7 +264,7 @@ mongo_and <- function(expr1, expr2) {
   utils::modifyList(expr1, expr2)
 }
 mongo_equal <- function(field, value) {
-  query <- list(list("$eq"=value))
+  query <- list(list("$eq" = value))
   names(query) = field
   query
 }

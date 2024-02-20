@@ -68,8 +68,7 @@ mock_item <- function(api, collection_id, item_id) {
   res <- mock_res()
   api_item(api, req, res, collection_id, item_id)
 }
-mock_search <- function(req,
-                        res,
+mock_search <- function(api,
                         limit = 10,
                         bbox = "",
                         datetime,

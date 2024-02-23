@@ -42,7 +42,7 @@ db_items.local <- function(db, collection_id, limit, bbox, datetime, page) {
     items <- local_filter_datetime(items, datetime)
   # spatial filter
   if (!is.null(bbox)) {
-    items <- local_filter_spatial(items, bbox_as_polygon(bbox))
+    items <- local_filter_spatial(items, bbox_as_sfc(bbox))
   }
   items$numberMatched <- length(items$features)
   # manage pagination
@@ -51,12 +51,11 @@ db_items.local <- function(db, collection_id, limit, bbox, datetime, page) {
 
 #' @export
 db_item.local <- function(db, collection_id, item_id) {
-  item <- local_items(db, collection_id)
-  item <- local_filter_ids(item, item_id)
-  item <- item$features[[1]]
+  items <- local_items(db, collection_id)
+  items <- local_filter_ids(items, item_id)
+  item <- items$features[[1]]
   item$collection <- collection_id
-  class(item) <- c("doc_item", "list")
-  item
+  as_item(item)
 }
 
 #' @export
@@ -80,10 +79,10 @@ db_search.local <- function(db,
     # spatial filter...
     # ...bbox
     if (!is.null(bbox)) {
-      items <- local_filter_spatial(items, bbox_as_polygon(bbox))
+      items <- local_filter_spatial(items, bbox_as_sfc(bbox))
     } else if (!is.null(intersects)) {
       # ...intersects
-      items <- local_filter_spatial(items, get_geom(intersects))
+      items <- local_filter_spatial(items, geom_as_sfg(intersects))
     }
     # make sure to have the collection_id for each item
     items$features <- lapply(items$features, function(item) {
@@ -120,10 +119,6 @@ local_items <- function(db, collection_id) {
 
 local_items_id <- function(items) {
   rstac::items_reap(items, "id")
-}
-
-local_items_datetime <- function(items) {
-  as.Date(rstac::items_datetime(items))
 }
 
 local_filter_ids <- function(items, ids) {
@@ -170,7 +165,12 @@ local_filter_end_date <- function(items, end_date) {
   items$features <- items$features[select]
   items
 }
-
+local_filter_datetime <- function(items, datetime) {
+  if (length(items$features) == 0) return(items)
+  select <- rstac::items_intersects(items, geom)
+  items$features <- items$features[select]
+  items
+}
 local_filter_spatial <- function(items, geom) {
   if (length(items$features) == 0) return(items)
   select <- rstac::items_intersects(items, geom)

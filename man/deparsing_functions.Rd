@@ -4,14 +4,14 @@
 \alias{deparsing_functions}
 \alias{deparse_array}
 \alias{deparse_datetime}
-\alias{deparse_geojson}
+\alias{deparse_json}
 \title{Deparsing Functions}
 \usage{
 deparse_array(x)
 
 deparse_datetime(x)
 
-deparse_geojson(x, ...)
+deparse_json(x, ...)
 }
 \arguments{
 \item{x}{The data to be converted.}
@@ -30,7 +30,7 @@ types back to HTTP input parameter strings.
 \item \code{deparse_datetime}: Converts a datetime object to an STAC
 interval-like string.
 
-\item \code{deparse_geojson}: Converts an R object to a GeoJSON string.
+\item \code{deparse_json}: Converts an R object to a GeoJSON string.
 
 }
 }

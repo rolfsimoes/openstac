@@ -10,7 +10,7 @@
 #' \item `deparse_datetime`: Converts a datetime object to an STAC
 #'   interval-like string.
 #'
-#' \item `deparse_geojson`: Converts an R object to a GeoJSON string.
+#' \item `deparse_json`: Converts an R object to a GeoJSON string.
 #'
 #' }
 #'
@@ -42,6 +42,6 @@ deparse_datetime <- function(x) {
 }
 #' @rdname deparsing_functions
 #' @export
-deparse_geojson <- function(x, ...) {
+deparse_json <- function(x, ...) {
   jsonlite::toJSON(x, auto_unbox = TRUE, ...)
 }

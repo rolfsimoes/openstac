@@ -59,7 +59,7 @@
 #'
 #' @param intersects The spatial filter for items, specified as
 #'   a GeoJSON geometry object representing the area of interest.
-#'   Use `deparse_geojson()` function to convert the GeoJSON
+#'   Use `deparse_json()` function to convert the GeoJSON
 #'   geometry list into a GeoJSON string.
 #'
 #' @param ids A list of item identifiers to filter the search
@@ -76,7 +76,7 @@
 #'   For API handling functions, returns the document to return
 #'   as response.
 #'
-#' @seealso [deparse_array()], [deparse_datetime()], [deparse_geojson()]
+#' @seealso [deparse_array()], [deparse_datetime()], [deparse_json()]
 #'
 #' @references
 #' For more information about the STAC specification,

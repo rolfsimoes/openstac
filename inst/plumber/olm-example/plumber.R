@@ -19,8 +19,14 @@ api <- create_stac(
 )
 
 # Set API database
-db_file <- system.file("db/olm-example.rds", package = "openstac")
-api <- set_db(api, driver = "local", file = db_file)
+# db_file <- system.file("db/olm-example.rds", package = "openstac")
+# api <- set_db(api, driver = "local", file = db_file)
+api <- set_db(
+  api = api,
+  driver = "mongodb",
+  db = "openlandmap",
+  url = "mongodb://127.0.0.1:27017"
+)
 
 #* Setup plumber router
 #* @plumber

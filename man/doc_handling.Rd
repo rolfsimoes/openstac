@@ -96,7 +96,7 @@ is targeting.}
 
 \item{intersects}{The spatial filter for items, specified as
 a GeoJSON geometry object representing the area of interest.
-Use \code{deparse_geojson()} function to convert the GeoJSON
+Use \code{deparse_json()} function to convert the GeoJSON
 geometry list into a GeoJSON string.}
 
 \item{ids}{A list of item identifiers to filter the search
@@ -152,5 +152,5 @@ For more information about the OGC API specification,
 see: \url{http://www.opengis.net/doc/IS/ogcapi-features-1/1.0}
 }
 \seealso{
-\code{\link[=deparse_array]{deparse_array()}}, \code{\link[=deparse_datetime]{deparse_datetime()}}, \code{\link[=deparse_geojson]{deparse_geojson()}}
+\code{\link[=deparse_array]{deparse_array()}}, \code{\link[=deparse_datetime]{deparse_datetime()}}, \code{\link[=deparse_json]{deparse_json()}}
 }

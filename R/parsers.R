@@ -39,6 +39,7 @@ parse_datetime <- function(x) {
 }
 #' @keywords internal
 parse_geojson <- function(x, ...) {
+  # TODO: check for geometry conformity
   tryCatch({
     jsonlite::fromJSON(
       txt = x,

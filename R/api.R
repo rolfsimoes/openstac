@@ -217,6 +217,7 @@ api_collections <- function(api, req, res) {
 #' @rdname api_handling
 #' @export
 api_collection <- function(api, req, res, collection_id) {
+  collection_id <- URLdecode(collection_id)
   doc_collection(api, req, collection_id)
 }
 #' @rdname api_handling

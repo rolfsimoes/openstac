@@ -4,6 +4,9 @@ get_pages <- function(items, limit) {
 is_absolute_url <- function(url) {
   grepl("^.+://.+$", url)
 }
+escape_url <- function(url) {
+  gsub("/", "%2F", url)
+}
 as_item <- function(item) {
   structure(item, class = c("doc_item", "rstac_doc","list"))
 }

@@ -7,9 +7,10 @@ new_db.local <- function(driver, file, ...) {
   stopifnot(is.list(data))
   stopifnot(!is.null(names(data)))
   stopifnot("collections" %in% names(data))
-  stopifnot("items" %in% names(data))
-  stopifnot(all(names(data$collections) %in% names(data$items)))
-  stopifnot(all(names(data$items) %in% names(data$collections)))
+  if ("items" %in% names(data)) {
+    stopifnot(all(names(data$collections) %in% names(data$items)))
+    stopifnot(all(names(data$items) %in% names(data$collections)))
+  }
   structure(data, class = driver[[1]])
 }
 

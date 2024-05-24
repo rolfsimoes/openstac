@@ -103,7 +103,7 @@ links_landing_page.oafeat <- function(doc, api, req) {
     doc <- add_link(
       doc = doc,
       rel = "child",
-      href = make_url(host, "/collections", doc$id),
+      href = make_url(host, "/collections", escape_url(doc$id)),
       type = "application/json",
       title = doc$title
     )
@@ -130,7 +130,7 @@ links_collection.oafeat <- function(doc, api, req) {
   doc <- update_link(
     doc = doc,
     rel = "item",
-    href = make_url(host, "/collections", doc$id, "items"),
+    href = make_url(host, "/collections", escape_url(doc$id), "items"),
     type = "application/geo+json"
   )
   doc

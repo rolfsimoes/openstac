@@ -22,6 +22,8 @@
 #'
 #' \item `get_host`: Get the API host address from an `req` object.
 #'
+#' \item `get_path`: Get the path from an `req` object.
+#'
 #' \item `get_method`: Get the HTTP method from an `req` object.
 #'
 #' }
@@ -100,13 +102,96 @@ api_stopifnot <- function(expr, status, ...) {
 }
 #' @rdname api_helpers
 #' @export
-get_host <- function(req) {
+get_host <- function(api, req) {
+  host <- api_attr(api, "api_base_url")
+  if (!is.null(host))
+    return(host)
   if ("HTTP_HOST" %in% names(req))
     return(paste0(req$rook.url_scheme, "://", req$HTTP_HOST))
-  paste0(req$rook.url_scheme, "://", req$SERVER_NAME, req$SERVER_PORT)
+  host <- paste0(req$rook.url_scheme, "://", req$SERVER_NAME)
+  if (!is.null(req$SERVER_PORT) && nzchar(req$SERVER_PORT) &&
+      req$SERVER_PORT != "80")
+    host <- paste0(host, ":", req$SERVER_PORT)
+  host
+}
+#' @rdname api_helpers
+#' @export
+get_path <- function(req) {
+  req$PATH_INFO
 }
 #' @rdname api_helpers
 #' @export
 get_method <- function(req) {
   req$REQUEST_METHOD
+}
+#' @keywords internal
+api_env <- function(api) {
+  attr(api, "env")
+}
+#' @keywords internal
+api_attr <- function(api, name) {
+  if (exists(name, envir = api_env(api), inherits = FALSE))
+    get(name, envir = api_env(api), inherits = FALSE)
+}
+#' @keywords internal
+`api_attr<-` <- function(api, name, value) {
+  assign(name, value, envir = api_env(api), inherits = FALSE)
+  api
+}
+#' @keywords internal
+get_plumber <- function(api) {
+  api_attr(api, "plumber")
+}
+#' @keywords internal
+setup_plumber_spec <- function(api, pr, spec_endpoint) {
+  spec_handler <- function(req, res, ...) {
+    # TODO: add models
+    utils::modifyList(
+      list(servers = list(list(
+        url = make_url(get_host(api, req))
+      ))),
+      pr$getApiSpec()
+    )
+  }
+  api_attr(api, "spec_endpoint") <- spec_endpoint
+  plumber::pr_set_docs(pr, FALSE)
+  plumber::pr_get(
+    pr = pr,
+    path = spec_endpoint,
+    handler = spec_handler,
+    serializer = plumber::serializer_unboxed_json(),
+    tag = "API"
+  )
+}
+#' @keywords internal
+setup_plumber_docs <- function(api, pr, docs_endpoint, spec_endpoint) {
+  docs_handler <- function(req, res, ...) {
+    swagger::swagger_spec(
+      api_path = paste0(
+        '"',
+        make_url(get_host(api, req), spec_endpoint, ...),
+        '"'
+      )
+    )
+  }
+  api_attr(api, "docs_endpoint") <- docs_endpoint
+  plumber::pr_static(
+    pr = pr,
+    path = docs_endpoint,
+    direc = swagger::swagger_path()
+  )
+  plumber::pr_get(
+    pr = pr,
+    path = paste0(docs_endpoint, "/index.html"),
+    handler = docs_handler,
+    serializer = plumber::serializer_html(),
+    tag = "API"
+  )
+  plumber::pr_get(
+    pr = pr,
+    path = paste0(docs_endpoint, "/"),
+    handler = docs_handler,
+    serializer = plumber::serializer_html(),
+    tag = "API"
+  )
 }

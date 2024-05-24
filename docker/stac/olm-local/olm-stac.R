@@ -38,16 +38,24 @@ api <- create_stac(
 # Set API database
 api <- set_db(api, driver = "local", file = "/openstac/openlandmap.rds")
 
-#* Custom error handling
+#* Register plumber router in api object
 #* @plumber
 function(pr) {
-  pr_set_error(pr, api_error_handler)
+  set_plumber(api, pr, handle_errors = TRUE)
 }
 
 #* Enable Cross-origin Resource Sharing
 #* @filter cors
 function(req, res) {
   api_cors_handler(req, res, origin = "*", methods = "*")
+}
+
+#* OpenAPI spec
+#* @get /api
+#* @serializer unboxedJSON
+#* @tag 'STAC API v1.0.0'
+function(req, res) {
+  api_spec(api, req)
 }
 
 #* Landing page
@@ -145,7 +153,7 @@ function(req, res, collection_id, item_id) {
 #* Search endpoint
 #* @get /search
 #* @param limit:int Maximum number of features to return (default: 10)
-#* @param bbox:str Bounding box (minx,miny,maxx,maxy)
+#* @param bbox:str Bounding box in OGC:CRS84 (long_min,lat_min,long_max,lat_max)
 #* @param datetime:str Datetime filter
 #* @param intersects:str GeoJSON geometry to do spatial search
 #* @param ids:str Array of items ID to return

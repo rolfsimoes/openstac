@@ -1,13 +1,19 @@
 Package: openstac
-Title: R STAC Server
+Title: STAC API Server
 Version: 0.2
 Authors@R: c(
     person("Rolf", "Simoes", email = "rolf.simoes@opengeohub.org", 
            role = c("aut", "cre"), comment = c(ORCID = "0000-0003-0953-4132")),
     person("Murat", "Sahin", email = "murat.sahin@opengeohub.org", 
            role = c("aut"), comment = c(ORCID = "0000-0003-4143-1467")),
-    person("OpenGeoHub", , , role = c("cph")))
-Description: This package implements an STAC API server for R language.
+    person("OpenGeoHub Foundation", , , role = c("cph")))
+Description: 
+    Implements STAC and OGC API Features server. Users can connect to 
+    MongoDB database to create robust STAC API servers in production 
+    environments. With streamlined workflows for generating STAC documents 
+    and deploying datasets, users can easily share their geospatial data 
+    with others. openstac design facilitates package extension to 
+    accommodate additional components of the STAC specification.
 License: MIT + file LICENSE
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
@@ -15,7 +21,10 @@ RoxygenNote: 7.3.1
 Depends: R (>= 3.5.0)
 Imports: 
     jsonlite,
-    plumber
+    plumber,
+    swagger
 Suggests:
     rstac,
     mongolite
+URL: https://github.com/Open-Earth-Monitor/openstac
+BugReports: https://github.com/Open-Earth-Monitor/openstac/issues

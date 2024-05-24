@@ -39,7 +39,7 @@ api <- create_stac(
 api <- set_db(
   api, driver = "mongodb",
   db = "openlandmap",
-  url = "mongodb://localhost:23874" # the same as the container port
+  url = "mongodb://0.0.0.0:27017" # the same as the container port
 )
 
 #* Custom error handling
@@ -91,7 +91,7 @@ function(req, res, collection_id) {
 #* @get /collections/<collection_id>/items
 #* @param collection_id:str The ID of the collection
 #* @param limit:int Maximum number of features to return (default: 10)
-#* @param bbox:str Bounding box (minx,miny,maxx,maxy)
+#* @param bbox:str Bounding box in OGC:CRS84 (long_min,lat_min,long_max,lat_max)
 #* @param datetime:str Datetime filter
 #* @param page:int Pagination parameter (default: 1)
 #* @serializer unboxedJSON
@@ -173,6 +173,7 @@ function(req,
   }
   if (missing(bbox)) bbox <- NULL
   if (missing(intersects)) intersects <- NULL
+  print('this one')
   api_stopifnot(
     is.null(bbox) || is.null(intersects),
     status = 400,
@@ -212,7 +213,7 @@ function(req,
     check_page(page)
   }
   # call api search asynchronously
-  promises::future_promise({
+  # promises::future_promise({
     api_search(
       api = api,
       req = req,
@@ -225,7 +226,7 @@ function(req,
       collections = collections,
       page = page
     )
-  })
+  # })
 }
 
 #* Search endpoint
@@ -250,6 +251,7 @@ function(req, res) {
   }
   if (missing(bbox)) bbox <- NULL
   if (missing(intersects)) intersects <- NULL
+  print('this two')
   api_stopifnot(
     is.null(bbox) || is.null(intersects),
     status = 400,
@@ -284,7 +286,7 @@ function(req, res) {
     check_page(page)
   }
   # call api search asynchronously
-  promises::future_promise({
+  # promises::future_promise({
     api_search(
       api = api,
       req = req,
@@ -297,5 +299,5 @@ function(req, res) {
       collections = collections,
       page = page
     )
-  })
+  # })
 }

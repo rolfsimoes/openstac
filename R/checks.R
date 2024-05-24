@@ -30,14 +30,6 @@
 #'   provided. If no collections are provided, it raises an error with
 #'   the appropriate status code.
 #'
-#' \item `check_collection_in_db`: Checks if the specified collection
-#'   exists in the database. If the collection does not exist, it raises
-#'   an error with the appropriate status code.
-#'
-#' \item `check_item_in_db`: Checks if the specified item exists in
-#'   the database. If the item does not exist, it raises an error with
-#'   the appropriate status code.
-#'
 #' }
 #'
 #' @param min The minimum allowed value for the limit parameter.
@@ -48,19 +40,11 @@
 #'
 #' @param bbox The bbox parameter to be checked.
 #'
-#' @param datetime The datetime parameter to be checked.
-#'
 #' @param page The page parameter to be checked.
 #'
 #' @param intersects The intersects parameter to be checked.
 #'
 #' @param collections The collections parameter to be checked.
-#'
-#' @param collection_id The identifier of the collection. This parameter
-#'   specifies which collections will be checked.
-#'
-#' @param item_id The identifier of the item within the specified collection.
-#'   This parameter specifies which items will be checked.
 #'
 #' @seealso
 #' For more details on error handler: [api_error_handler()]
@@ -70,20 +54,13 @@ NULL
 
 #' @keywords internal
 check_rfc3339 <- function(datetime) {
+  if (is.null(datetime)) return()
+  datetime <- tryCatch(as.Date(datetime), error = function(e) NA)
   api_stopifnot(
     !is.na(datetime),
     status = 400,
     "datetime is not a valid time stamp or time interval"
   )
-}
-#' @keywords internal
-check_datetime <- function(datetime) {
-  start_date <- get_datetime_start(datetime)
-  end_date <- get_datetime_end(datetime)
-  exact_date <- get_datetime_exact(datetime)
-  if (!is.null(start_date)) check_rfc3339(start_date)
-  if (!is.null(end_date)) check_rfc3339(end_date)
-  if (!is.null(exact_date)) check_rfc3339(exact_date)
 }
 #' @rdname validate_functions
 #' @export
@@ -145,8 +122,7 @@ check_collections <- function(collections) {
     "at least one collection must be provided"
   )
 }
-#' @rdname validate_functions
-#' @export
+#' @keywords internal
 check_collection_in_db <- function(db, collection_id) {
   api_stopifnot(
     all(db_collections_id_exist(db, collection_id)),
@@ -154,8 +130,7 @@ check_collection_in_db <- function(db, collection_id) {
     "collection not found on the server"
   )
 }
-#' @rdname validate_functions
-#' @export
+#' @keywords internal
 check_item_in_db <- function(db, collection_id, item_id) {
   api_stopifnot(
     all(db_items_id_exist(db, collection_id, item_id)),

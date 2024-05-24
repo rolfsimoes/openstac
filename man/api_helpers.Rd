@@ -7,6 +7,7 @@
 \alias{api_stop}
 \alias{api_stopifnot}
 \alias{get_host}
+\alias{get_path}
 \alias{get_method}
 \title{API helper functions}
 \usage{
@@ -18,7 +19,9 @@ api_stop(status, ...)
 
 api_stopifnot(expr, status, ...)
 
-get_host(req)
+get_host(api, req)
+
+get_path(req)
 
 get_method(req)
 }
@@ -73,6 +76,8 @@ function.
 is evaluated as \code{FALSE}.
 
 \item \code{get_host}: Get the API host address from an \code{req} object.
+
+\item \code{get_path}: Get the path from an \code{req} object.
 
 \item \code{get_method}: Get the HTTP method from an \code{req} object.
 

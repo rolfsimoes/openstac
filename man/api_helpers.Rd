@@ -9,6 +9,7 @@
 \alias{get_host}
 \alias{get_path}
 \alias{get_method}
+\alias{api_add_conforms_to}
 \title{API helper functions}
 \usage{
 api_cors_handler(req, res, origin = "*", methods = "*")
@@ -24,6 +25,8 @@ get_host(api, req)
 get_path(req)
 
 get_method(req)
+
+api_add_conforms_to(api, conforms_to)
 }
 \arguments{
 \item{req}{The request object from the \code{plumber} package, containing

@@ -136,29 +136,27 @@ create_api <- function(api_class,
                        title,
                        description,
                        conforms_to, ...) {
-  structure(
-    list(
+  env <- list2env(
+    x = list(
       title = title,
       description = description,
       conforms_to = conforms_to, ...
     ),
-    class = api_class,
-    env = new.env(hash = TRUE, parent = parent.frame())
+    parent = emptyenv(),
+    hash = TRUE
   )
-}
-#' @rdname api_handling
-#' @export
-create_stac <- function(id,
-                        title,
-                        description,
-                        conforms_to = NULL, ...) {
-  create_api(
-    api_class = c("stac", "oafeat"),
-    title = title,
-    description = description,
-    conforms_to = conforms_to,
-    stac_version = "1.0.0",
-    id = id, ...
+  structure(
+    list(
+      title = \() env$title,
+      description = \() env$description,
+      conforms_to = \() env$conforms_to,
+      as_list = \() as.list(env),
+      get = \(name, default = NULL) get0(name, env, ifnotfound = default),
+      set = \(name, value) assign(name, value, envir = env),
+      has = \(name) exists(name, envir = env),
+      env = \() env
+    ),
+    class = api_class
   )
 }
 #' @rdname api_handling
@@ -170,15 +168,41 @@ create_oafeat <- function(title,
   # server conforms to.
   ogcapi_conforms_to <- c(
     "http://www.opengis.net/spec/ogcapi-features-1/1.0/conf/core",
-    "http://www.opengis.net/spec/ogcapi-features-1/1.0/conf/oas30",
     "http://www.opengis.net/spec/ogcapi-features-1/1.0/conf/geojson"
   )
-  create_api(
+  api <- create_api(
     api_class = "oafeat",
     title = title,
     description = description,
     conforms_to = c(ogcapi_conforms_to, conforms_to), ...
   )
+  api
+}
+#' @rdname api_handling
+#' @export
+create_stac <- function(id,
+                        title,
+                        description,
+                        conforms_to = NULL, ...) {
+  # A list of all conformance classes specified in a standard that the
+  # server conforms to.
+  ogcapi_conforms_to <- c(
+    "http://www.opengis.net/spec/ogcapi-features-1/1.0/conf/core",
+    "http://www.opengis.net/spec/ogcapi-features-1/1.0/conf/geojson",
+    "https://api.stacspec.org/v1.0.0/core",
+    "https://api.stacspec.org/v1.0.0/collections",
+    "https://api.stacspec.org/v1.0.0/item-search",
+    "https://api.stacspec.org/v1.0.0/ogcapi-features"
+  )
+  api <- create_api(
+    api_class = c("stac", "oafeat"),
+    title = title,
+    description = description,
+    conforms_to = c(ogcapi_conforms_to, conforms_to),
+    stac_version = "1.0.0",
+    id = id, ...
+  )
+  api
 }
 #' @rdname api_handling
 #' @export
@@ -201,135 +225,58 @@ setup_plumber <- function(api,
 }
 #' @rdname api_handling
 #' @export
-api_landing_page <- function(api, req, res) {
-  doc_landing_page(api, req)
+api_landing_page <- function(api, ...) {
+  UseMethod("api_landing_page", api)
 }
 #' @rdname api_handling
 #' @export
-api_conformance <- function(api, req, res) {
-  doc_conformance(api, req)
+api_conformance <- function(api, ...) {
+  UseMethod("api_conformance", api)
 }
 #' @rdname api_handling
 #' @export
-api_collections <- function(api, req, res) {
-  doc_collections(api, req)
+api_collections <- function(api, ...) {
+  UseMethod("api_collections", api)
 }
 #' @rdname api_handling
 #' @export
-api_collection <- function(api, req, res, collection_id) {
-  collection_id <- URLdecode(collection_id)
-  doc_collection(api, req, collection_id)
+api_collection <- function(api, collection_id, ...) {
+  UseMethod("api_collection", api)
 }
 #' @rdname api_handling
 #' @export
 api_items <- function(api,
-                      req,
-                      res,
                       collection_id,
                       limit,
                       bbox,
                       datetime,
-                      page) {
-  # check parameters
-  if (!is.null(limit)) {
-    limit <- parse_int(limit[[1]])
-    check_limit(limit, min = 1, max = 10000)
-  }
-  if (missing(bbox)) bbox <- NULL
-  if (!is.null(bbox)) {
-    bbox <- parse_dbl(bbox)
-    check_bbox(bbox)
-  }
-  if (missing(datetime)) datetime <- NULL
-  if (!is.null(datetime)) {
-    datetime <- parse_datetime(datetime[[1]])
-  }
-  if (!is.null(page)) {
-    page <- parse_int(page[[1]])
-    check_page(page)
-  }
-  doc_items(
-    api = api,
-    req = req,
-    collection_id = collection_id,
-    limit = limit,
-    bbox = bbox,
-    datetime = datetime,
-    page = page
-  )
+                      page, ...) {
+  UseMethod("api_items", api)
 }
 #' @rdname api_handling
 #' @export
-api_item <- function(api, req, res, collection_id, item_id) {
-  doc_item(api, req, collection_id, item_id)
+api_item <- function(api, collection_id, item_id, ...) {
+  UseMethod("api_item", api)
 }
 #' @rdname api_handling
 #' @export
 api_search <- function(api,
-                       req,
-                       res,
                        limit,
                        bbox,
                        datetime,
                        intersects,
                        ids,
                        collections,
-                       page) {
-  # check parameters
-  if (!is.null(limit)) {
-    limit <- parse_int(limit[[1]])
-    # TODO: set max value in config
-    check_limit(limit, min = 1, max = 10000)
-  }
-  if (missing(bbox) || bbox == "") bbox <- NULL
-  if (missing(intersects) || intersects == "") intersects <- NULL
-  api_stopifnot(
-    is.null(bbox) || is.null(intersects),
-    status = 400,
-    "only one of either intersects or bbox may be provided"
-  )
-  if (!is.null(bbox)) {
-    bbox <- parse_dbl(bbox)
-    check_bbox(bbox)
-  }
-  if (missing(datetime)) datetime <- NULL
-  if (!is.null(datetime)) {
-    datetime <- parse_datetime(datetime[[1]])
-  }
-  method <- get_method(req)
-  if (!is.null(intersects)) {
-    api_stopifnot(
-      method == "POST",
-      status = 405,
-      "the request method is not supported"
-    )
-    intersects <- parse_geojson(intersects)
-    check_intersects(intersects)
-  }
-  if (missing(ids)) ids <- NULL
-  if (!is.null(ids)) ids <- parse_str(ids)
-  api_stopifnot(
-    !missing(collections),
-    status = 400,
-    "collections parameter must be provided"
-  )
-  if (!is.null(collections)) {
-    collections <- parse_str(collections)
-    check_collections(collections)
-  }
-  if (!is.null(page)) {
-    page <- parse_int(page[[1]])
-    check_page(page)
-  }
-  doc_search(
-    api = api,
-    req = req,
-    limit = limit,
-    bbox = bbox,
-    datetime = datetime,
-    intersects = intersects,
-    ids = ids,
-    collections = collections,
-    page = page
-  )
+                       page, ...) {
+  UseMethod("api_search", api)
+}
+#' @keywords internal
+map_collections <- function(doc, fn, ...) {
+  doc$collections <- lapply(doc$collections, fn, ...)
+  doc
+}
+#' @keywords internal
+map_features <- function(doc, fn, ...) {
+  doc$features <- lapply(doc$features, fn, ...)
+  doc
 }

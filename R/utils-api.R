@@ -96,7 +96,7 @@ api_stop <- function(status, ...) {
 #' @export
 api_stopifnot <- function(expr, status, ...) {
   message <- paste0(...)
-  if (!nzchar(message))
+  if (length(message) == 0 || !nzchar(message))
     message <- paste(deparse(substitute(expr)), "is not TRUE")
   if (!expr) api_stop(status, message)
 }
@@ -124,18 +124,21 @@ get_path <- function(req) {
 get_method <- function(req) {
   req$REQUEST_METHOD
 }
-#' @keywords internal
-api_env <- function(api) {
-  attr(api, "env")
+#' @rdname api_helpers
+#' @export
+api_add_conforms_to <- function(api, conforms_to) {
+  current <- api_attr(api, "conforms_to")
+  if (!is.null(current))
+    conforms_to <- unique(c(current, conforms_to))
+  api_attr(api, "conforms_to") <- conforms_to
 }
 #' @keywords internal
 api_attr <- function(api, name) {
-  if (exists(name, envir = api_env(api), inherits = FALSE))
-    get(name, envir = api_env(api), inherits = FALSE)
+  api$get(name)
 }
 #' @keywords internal
 `api_attr<-` <- function(api, name, value) {
-  assign(name, value, envir = api_env(api), inherits = FALSE)
+  api$set(name, value)
   api
 }
 #' @keywords internal
@@ -153,6 +156,9 @@ setup_plumber_spec <- function(api, pr, spec_endpoint) {
       pr$getApiSpec()
     )
   }
+  api_add_conforms_to(
+    api, "http://www.opengis.net/spec/ogcapi-features-1/1.0/conf/oas30"
+  )
   api_attr(api, "spec_endpoint") <- spec_endpoint
   plumber::pr_set_docs(pr, FALSE)
   plumber::pr_get(
@@ -194,4 +200,26 @@ setup_plumber_docs <- function(api, pr, docs_endpoint, spec_endpoint) {
     serializer = plumber::serializer_html(),
     tag = "API"
   )
+}
+#' @keywords internal
+local_req <- function(path = "/", body = list()) {
+  req <- list(
+    REQUEST_METHOD = "GET",
+    HTTP_ACCESS_CONTROL_REQUEST_HEADERS = "*",
+    HTTP_HOST = "0.0.0.0",
+    HTTP_ACCEPT = "*/*",
+    SERVER_NAME = "0.0.0.0",
+    SERVER_PORT = "8080",
+    PATH_INFO = "",
+    HTTP_AUTHORIZATION = "0123456789",
+    rook.url_scheme = "http",
+    body = body
+  )
+  req
+}
+#' @keywords internal
+get_req <- function(x) {
+  if (!missing(x))
+    return(x)
+  local_req()
 }

@@ -178,7 +178,9 @@ references below for more details.}
 \item{handle_errors}{A logical value indicating whether to handle
 errors using the \code{openstac} default error handler. Default is \code{TRUE}.}
 
-\item{api_base_url}{A character string specifying the base URL of the API.}
+\item{api_base_url}{A character string specifying the base URL of the API.
+Can be either a full URL or a relative path starting with \code{/}.
+Example: \verb{http://localhost:8000} or \verb{/v1}.}
 
 \item{spec_endpoint}{The endpoint where the API specification
 (OpenAPI) will be available. An \code{NULL} value disable this feature.}

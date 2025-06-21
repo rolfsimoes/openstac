@@ -7,8 +7,6 @@
 \alias{api_stop}
 \alias{api_stopifnot}
 \alias{get_host}
-\alias{get_path}
-\alias{get_method}
 \alias{api_add_conforms_to}
 \title{API helper functions}
 \usage{
@@ -21,10 +19,6 @@ api_stop(status, ...)
 api_stopifnot(expr, status, ...)
 
 get_host(api, req)
-
-get_path(req)
-
-get_method(req)
 
 api_add_conforms_to(api, conforms_to)
 }

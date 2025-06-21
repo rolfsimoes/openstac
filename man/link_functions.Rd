@@ -2,13 +2,19 @@
 % Please edit documentation in R/links.R
 \name{link_functions}
 \alias{link_functions}
-\alias{add_link}
 \alias{update_link}
+\alias{root_url}
+\alias{self_url}
+\alias{parent_url}
 \title{Link helper functions}
 \usage{
-add_link(doc, rel, href, ...)
-
 update_link(doc, rel, href, ...)
+
+root_url(api, req)
+
+self_url(api, req, ...)
+
+parent_url(api, req)
 }
 \arguments{
 \item{doc}{The document to which the link will be added.}

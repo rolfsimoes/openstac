@@ -24,6 +24,13 @@ parent_url(api, req)
 \item{href}{The URL of the linked resource.}
 
 \item{...}{Additional attributes to include in the link.}
+
+\item{api}{An object representing the API. This object is typically
+created using either the \code{create_stac} or \code{create_ogcapi}}
+
+\item{req}{The HTTP request object. It contains information about
+the incoming request, such as headers, query parameters, and
+body data.}
 }
 \value{
 The updated document with the new link added.

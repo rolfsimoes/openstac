@@ -21,3 +21,5 @@ NULL
 #' @importFrom sf st_intersects
 #' @importFrom jsonlite fromJSON
 #' @importFrom jsonlite toJSON
+#' @importFrom glue glue_collapse
+#' @importFrom glue glue

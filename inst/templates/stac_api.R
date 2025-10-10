@@ -1,3 +1,5 @@
+# TODO: list and document all `{{` fields placeholders used in this file
+
 #* @apiTitle {{title}}
 #* @apiDescription {{description}}
 #* @apiVersion 1.0.0

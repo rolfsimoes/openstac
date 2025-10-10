@@ -17,6 +17,13 @@
 #'
 #' @param doc The document to which the link will be added.
 #'
+#' @param req The HTTP request object. It contains information about
+#'  the incoming request, such as headers, query parameters, and
+#'  body data.
+#'
+#' @param api An object representing the API. This object is typically
+#'   created using either the `create_stac` or `create_ogcapi`
+#'
 #' @param rel The relationship of the link (e.g., "self", "child").
 #'
 #' @param href The URL of the linked resource.
